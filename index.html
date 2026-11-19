@@ -270,6 +270,24 @@
     .eq-row.grp-giro .eq-badge.on { background: var(--giro); color: #fff; border-color: var(--giro); }
     .eq-row.grp-izaje .eq-badge.on { background: var(--izaje); color: #fff; border-color: var(--izaje); }
     .legend-small { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Cruceta (D-pad) */
+    .dpad-box { margin: 0 12px 12px 12px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #f8fafc; }
+    .dpad-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; text-align: center; }
+    .dpad { display: grid; grid-template-columns: repeat(3, 72px); grid-auto-rows: 64px; gap: 6px; justify-content: center; }
+    .dpad-btn {
+      border: none; border-radius: 12px; color: #fff; font-size: 22px; font-weight: 700; font-family: inherit;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;
+      transition: transform 0.05s, filter 0.1s;
+    }
+    .dpad-btn small { font-size: 10px; font-weight: 600; opacity: 0.9; }
+    .dpad-btn.giro { background: var(--giro); }
+    .dpad-btn.izaje { background: var(--izaje); }
+    .dpad-btn.home { background: #475569; }
+    .dpad-btn:hover:not(:disabled) { filter: brightness(1.1); }
+    .dpad-btn:active:not(:disabled) { transform: scale(0.94); }
+    .dpad-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+    .dpad-state { margin-top: 10px; text-align: center; font-size: 12px; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -398,6 +416,23 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- CONTROL DE CRUCETA (D-PAD) -->
+        <div class="dpad-box">
+          <div class="dpad-title">Cruceta: mueve la grúa paso a paso</div>
+          <div class="dpad">
+            <span></span>
+            <button id="btn-dpad-up" class="dpad-btn izaje" onclick="moveDpad('up')" title="Subir gancho (Z+1)">▲<small>Subir</small></button>
+            <span></span>
+            <button id="btn-dpad-left" class="dpad-btn giro" onclick="moveDpad('left')" title="Girar hacia G0 (G-1)">◄<small>Giro −</small></button>
+            <button id="btn-dpad-center" class="dpad-btn home" onclick="moveDpad('home')" title="Volver a home (0000)">●<small>Home</small></button>
+            <button id="btn-dpad-right" class="dpad-btn giro" onclick="moveDpad('right')" title="Girar hacia G3 (G+1)">►<small>Giro +</small></button>
+            <span></span>
+            <button id="btn-dpad-down" class="dpad-btn izaje" onclick="moveDpad('down')" title="Bajar gancho (Z-1)">▼<small>Bajar</small></button>
+            <span></span>
+          </div>
+          <div class="dpad-state" id="dpad-state">Giro G0 · Izaje Z0 (teclado: flechas, Inicio = home)</div>
         </div>
 
         <!-- BOTONES DE ACCIÓN RÁPIDA ABAJO -->
@@ -566,6 +601,28 @@
       recalculateSystem();
     }
 
+    // Cruceta: mueve la ENTRADA por pasos. Giro = bits [b3 b2] (0..3), izaje = bits [b1 b0] (0..3).
+    function moveDpad(dir) {
+      let g = (state.inputs[3] << 1) | state.inputs[2];
+      let z = (state.inputs[1] << 1) | state.inputs[0];
+      if (dir === 'home') { g = 0; z = 0; }
+      else if (dir === 'left')  g = Math.max(0, g - 1);
+      else if (dir === 'right') g = Math.min(3, g + 1);
+      else if (dir === 'up')    z = Math.min(3, z + 1);
+      else if (dir === 'down')  z = Math.max(0, z - 1);
+      state.inputs = [z & 1, z >> 1, g & 1, g >> 1];
+      recalculateSystem();
+    }
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.target && ['INPUT', 'TEXTAREA'].includes(ev.target.tagName)) return;
+      const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Home: 'home' };
+      const dir = map[ev.key];
+      if (!dir) return;
+      ev.preventDefault();
+      moveDpad(dir);
+    });
+
     function renderUI(gateInfo) {
       const e3 = state.inputs[3], e2 = state.inputs[2], e1 = state.inputs[1], e0 = state.inputs[0];
       const s3 = state.outputs[3], s2 = state.outputs[2], s1 = state.outputs[1], s0 = state.outputs[0];
@@ -612,6 +669,16 @@
       }
 
       document.getElementById('out-decimal-label').textContent = `${outBin} (DEC ${outDec})`;
+
+      // Cruceta: límites según la ENTRADA pedida
+      const gIn = (e3 << 1) | e2;
+      const zIn = (e1 << 1) | e0;
+      document.getElementById('btn-dpad-left').disabled  = gIn === 0;
+      document.getElementById('btn-dpad-right').disabled = gIn === 3;
+      document.getElementById('btn-dpad-down').disabled  = zIn === 0;
+      document.getElementById('btn-dpad-up').disabled    = zIn === 3;
+      document.getElementById('dpad-state').textContent =
+        `Pedido: giro G${gIn} · izaje Z${zIn} (teclado: flechas, Inicio = home)`;
 
       const gateOuts = [
         { id: 's3', val: gateInfo.s3 },
