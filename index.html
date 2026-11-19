@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONTROL GARRA 2-GDL // ESP32 + 4 BITS</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.5;
+      margin: 0;
+      padding: 16px;
+    }
+
+    /* Utilidades CSS 100% Offline (Funciona sin Internet) */
+    .container-main { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .border-box { border: 1px solid #000000; background-color: #ffffff; }
+    .header-bar { padding: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    .title-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .title-main { font-size: 18px; font-weight: 700; text-transform: uppercase; margin: 2px 0 0 0; }
+
+    .toolbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .tab-group { height: 36px; display: flex; border: 1px solid #000000; }
+    .btn-ctrl {
+      height: 36px;
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid #000000;
+      background-color: #ffffff;
+      color: #000000;
+      cursor: pointer;
+    }
+    .btn-ctrl:hover { background-color: #000000; color: #ffffff; }
+    .btn-tab {
+      height: 100%;
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: none;
+      border-left: 1px solid #000000;
+      cursor: pointer;
+    }
+    .btn-tab:first-child { border-left: none; }
+    .active-black { background-color: #000000 !important; color: #ffffff !important; }
+    .active-black:hover { background-color: #ffffff !important; color: #000000 !important; }
+    .inactive-white { background-color: #ffffff !important; color: #000000 !important; }
+    .inactive-white:hover { background-color: #000000 !important; color: #ffffff !important; }
+
+    /* Tira métrica */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border: 1px solid #000000;
+      font-size: 12px;
+    }
+    @media (max-width: 900px) {
+      .summary-strip { grid-template-columns: 1fr; }
+    }
+    .strip-cell {
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-right: 1px solid #000000;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .strip-cell:last-child { border-right: none; background-color: #000000; color: #ffffff; }
+
+    /* Grilla de 3 columnas */
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel-card {
+      border: 1px solid #000000;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .panel-header {
+      background-color: #000000;
+      color: #ffffff;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+    .helper-box {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 8px;
+    }
+
+    .buttons-4-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .bit-card {
+      border: 1px solid #000000;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .bit-title { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .bit-wire { font-size: 10px; text-transform: uppercase; margin-bottom: 8px; }
+    .bit-btn {
+      height: 36px;
+      width: 100%;
+      border: 1px solid #000000;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .bit-role { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 8px; }
+
+    .out-pattern-box { border: 1px solid #000000; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .out-header { font-size: 12px; font-weight: 700; text-transform: uppercase; display: flex; justify-content: space-between; }
+    .out-4-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; font-size: 12px; font-weight: 700; }
+    .out-cell { border: 1px solid #000000; padding: 8px 4px; }
+
+    .preset-grid { padding: 0 12px 12px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .eq-list { border: 1px solid #000000; font-size: 12px; }
+    .eq-row {
+      padding: 7px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #000000;
+    }
+    .eq-row:last-child { border-bottom: none; }
+    .eq-badge { font-weight: 700; padding: 2px 6px; border: 1px solid #000000; }
+
+    .banner-switch {
+      border: 1px solid #000000;
+      padding: 8px;
+      background-color: #000000;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      text-align: center;
+      cursor: pointer;
+    }
+    .banner-switch:hover { background-color: #ffffff; color: #000000; }
+
+    .info-box { border: 1px solid #000000; padding: 8px; font-size: 11px; }
+    canvas, svg { width: 100%; height: auto; border: 1px solid #000000; background-color: #ffffff; display: block; }
+  </style>
+</head>
+<body>
+  <div class="container-main">
+
+    <!-- ENCABEZADO Y MENÚ DE 2 MODOS -->
+    <header class="border-box header-bar">
+      <div>
+        <div class="title-sub">ELECTRÓNICA DIGITAL // ENTREGA 1 (100% OFFLINE)</div>
+        <h1 class="title-main">CONTROL DE GARRA 2-GDL CON ESP32 (4 BITS + COMPUERTAS)</h1>
+      </div>
+
+      <div class="toolbar-right">
+        <div class="tab-group" role="tablist">
+          <button id="btn-mode-binary" onclick="setMode('BINARY')" class="btn-tab active-black">
+            MODO 1: BINARIO (4 BITS)
+          </button>
+          <button id="btn-mode-gates" onclick="setMode('GATES')" class="btn-tab inactive-white">
+            MODO 2: COMPUERTAS LÓGICAS
+          </button>
+        </div>
+
+        <button id="btn-wokwi-live" onclick="initWokwiLiveBridge()" class="btn-ctrl">
+          WOKWI EN VIVO: CONECTANDO...
+        </button>
+
+        <button id="btn-serial" onclick="connectSerial()" class="btn-ctrl">
+          CONECTAR ESP32 FÍSICO (USB)
+        </button>
+      </div>
+    </header>
+
+    <!-- TIRA MÉTRICA COMPACTA -->
+    <section class="summary-strip">
+      <div class="strip-cell">
+        <span>MODO:</span>
+        <span id="strip-mode">MODO 1 // BINARIO</span>
+      </div>
+      <div class="strip-cell">
+        <span>ENTRADA:</span>
+        <span id="strip-input">0000 (DEC 0)</span>
+      </div>
+      <div class="strip-cell">
+        <span>SALIDA 4-BIT:</span>
+        <span id="strip-output">0000 (DEC 0)</span>
+      </div>
+      <div class="strip-cell">
+        <span>SERVO 1 (PINZA):</span>
+        <span id="strip-s1">0° // 500 µS</span>
+      </div>
+      <div class="strip-cell">
+        <span>SERVO 2 (BRAZO):</span>
+        <span id="strip-s2">0° // 500 µS</span>
+      </div>
+    </section>
+
+    <!-- GRILLA PRINCIPAL: BOTONERA + SIMULACIÓN + CIRCUITO DE COMPUERTAS -->
+    <div class="main-grid">
+
+      <!-- COLUMNA 1: BOTONERA DE 4 PULSADORES -->
+      <div class="panel-card">
+        <div>
+          <div class="panel-header">
+            <span>1. BOTONERA DE 4 PULSADORES</span>
+            <span id="badge-input-mode">PALABRA BINARIA 4B</span>
+          </div>
+
+          <div class="panel-body">
+            <div class="helper-box" id="mode-helper-text">
+              MODO 1 (BINARIO): [B3 B2] CONTROLAN SERVO 1 (PINZA AGARRAR/SOLTAR) Y [B1 B0] CONTROLAN SERVO 2 (BRAZO SUBIR/BAJAR).
+            </div>
+
+            <!-- 4 BOTONES INTERACTIVOS -->
+            <div class="buttons-4-grid">
+              <div class="bit-card">
+                <span class="bit-title" id="lbl-bit3">B3 (2³)</span>
+                <span class="bit-wire">MORADO</span>
+                <button id="btn-bit-3" onclick="toggleBit(3)" class="bit-btn inactive-white">0</button>
+                <span class="bit-role" id="role-bit3">PINZA MSB</span>
+              </div>
+
+              <div class="bit-card">
+                <span class="bit-title" id="lbl-bit2">B2 (2²)</span>
+                <span class="bit-wire">AZUL</span>
+                <button id="btn-bit-2" onclick="toggleBit(2)" class="bit-btn inactive-white">0</button>
+                <span class="bit-role" id="role-bit2">PINZA LSB</span>
+              </div>
+
+              <div class="bit-card">
+                <span class="bit-title" id="lbl-bit1">B1 (2¹)</span>
+                <span class="bit-wire">VERDE</span>
+                <button id="btn-bit-1" onclick="toggleBit(1)" class="bit-btn inactive-white">0</button>
+                <span class="bit-role" id="role-bit1">BRAZO MSB</span>
+              </div>
+
+              <div class="bit-card">
+                <span class="bit-title" id="lbl-bit0">B0 (2⁰)</span>
+                <span class="bit-wire">AMARILLO</span>
+                <button id="btn-bit-0" onclick="toggleBit(0)" class="bit-btn inactive-white">0</button>
+                <span class="bit-role" id="role-bit0">BRAZO LSB</span>
+              </div>
+            </div>
+
+            <!-- SALIDA DE 4 BITS QUE VA AL ESP32 -->
+            <div class="out-pattern-box">
+              <div class="out-header">
+                <span>PATRÓN DE 4 BITS ACTIVO:</span>
+                <span id="out-decimal-label">PATRÓN: 0000 (DEC 0)</span>
+              </div>
+              <div class="out-4-grid">
+                <div id="out-box-3" class="out-cell">S3 = 0</div>
+                <div id="out-box-2" class="out-cell">S2 = 0</div>
+                <div id="out-box-1" class="out-cell">S1 = 0</div>
+                <div id="out-box-0" class="out-cell">S0 = 0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTONES DE ACCIÓN RÁPIDA ABAJO -->
+        <div class="preset-grid">
+          <button onclick="setRawInputs(0,0,0,0)" class="btn-ctrl">
+            RESET [0000] (HOME)
+          </button>
+          <button onclick="setRawInputs(1,1,1,1)" class="btn-ctrl" id="btn-preset-max">
+            MÁXIMO [1111]
+          </button>
+        </div>
+      </div>
+
+      <!-- COLUMNA 2: VISTA MECÁNICA DE LA GARRA + PWM -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span>2. SIMULACIÓN DE LA GARRA (2 SERVOS)</span>
+          <span id="sim-action-badge">SALIDA: 0000 (DEC 0)</span>
+        </div>
+        <div class="panel-body">
+          <canvas id="clawCanvas" width="440" height="340"></canvas>
+        </div>
+      </div>
+
+      <!-- COLUMNA 3: CIRCUITO DE COMPUERTAS (MODO 2) -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span>3. CIRCUITO DE COMPUERTAS (MODO 2)</span>
+          <span id="gates-status-badge">74HC04 / 08 / 32</span>
+        </div>
+        <div class="panel-body">
+
+          <!-- AVISO CUANDO ESTÁ EN MODO 1 -->
+          <div id="gates-inactive-banner" onclick="setMode('GATES')" class="banner-switch">
+            ESTÁS EN MODO 1 (DIRECTO) — CLIC AQUÍ PARA ACTIVAR MODO 2 (COMPUERTAS)
+          </div>
+
+          <!-- ECUACIONES BOOLEANAS SIMPLIFICADAS EN TIEMPO REAL -->
+          <div class="eq-list">
+            <div class="eq-row">
+              <span><strong>S3</strong> = E3 + (E2 · E1)</span>
+              <span id="eq-val-s3" class="eq-badge">S3 = 0</span>
+            </div>
+            <div class="eq-row">
+              <span><strong>S2</strong> = E2 + (E3 · E1')</span>
+              <span id="eq-val-s2" class="eq-badge">S2 = 0</span>
+            </div>
+            <div class="eq-row">
+              <span><strong>S1</strong> = E1 + (E3 · E0)</span>
+              <span id="eq-val-s1" class="eq-badge">S1 = 0</span>
+            </div>
+            <div class="eq-row">
+              <span><strong>S0</strong> = E0 + (E2 · E3')</span>
+              <span id="eq-val-s0" class="eq-badge">S0 = 0</span>
+            </div>
+          </div>
+
+          <!-- DIAGRAMA INTERACTIVO DE COMPUERTAS (SVG MONOCROMÁTICO) -->
+          <div class="info-box">
+            <div style="font-weight:700; text-transform:uppercase; margin-bottom:4px;">DIAGRAMA DE COMPUERTAS (CLIC EN E3..E0):</div>
+            <svg id="gates-svg" viewBox="0 0 380 220"></svg>
+          </div>
+
+          <div class="info-box">
+            <div style="font-weight:700; text-transform:uppercase; margin-bottom:2px;">COMPORTAMIENTO EN MODO 2:</div>
+            <div>
+              • <strong>E3=1:</strong> CIERRA PINZA FIRME (90°).<br/>
+              • <strong>E2=1:</strong> PRE-AGARRE (30°) + BRAZO A 45°.<br/>
+              • <strong>E1=1:</strong> SUBE BRAZO A 90° (Y CON E2 CIERRA A 90° Y SUBE A 135°).<br/>
+              • <strong>E0=1:</strong> SUBE A 45° (Y CON E3 HACE AGARRE FIRME 90° + SUBIDA 135°).
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const state = {
+      mode: 'BINARY',
+      inputs: [0, 0, 0, 0],
+      outputs: [0, 0, 0, 0],
+      servo1Angle: 0,
+      servo2Angle: 0,
+      serialPort: null,
+      serialWriter: null
+    };
+
+    const SERVO1_MAP = [0, 30, 60, 90];
+    const SERVO2_MAP = [0, 45, 90, 135];
+
+    function angleToPwmUs(angle) {
+      return Math.round(500 + (angle / 180) * 1900);
+    }
+
+    function evaluateLogicGates(e3, e2, e1, e0) {
+      const notE1 = e1 === 0 ? 1 : 0;
+      const notE3 = e3 === 0 ? 1 : 0;
+
+      const and3 = (e2 & e1);
+      const and2 = (e3 & notE1);
+      const and1 = (e3 & e0);
+      const and0 = (e2 & notE3);
+
+      const s3 = (e3 | and3);
+      const s2 = (e2 | and2);
+      const s1 = (e1 | and1);
+      const s0 = (e0 | and0);
+
+      return { s3, s2, s1, s0, notE1, notE3, and3, and2, and1, and0 };
+    }
+
+    function recalculateSystem() {
+      const e3 = state.inputs[3];
+      const e2 = state.inputs[2];
+      const e1 = state.inputs[1];
+      const e0 = state.inputs[0];
+
+      const gateInfo = evaluateLogicGates(e3, e2, e1, e0);
+
+      if (state.mode === 'BINARY') {
+        state.outputs = [e0, e1, e2, e3];
+      } else {
+        state.outputs = [gateInfo.s0, gateInfo.s1, gateInfo.s2, gateInfo.s3];
+      }
+
+      const idxS1 = (state.outputs[3] << 1) | state.outputs[2];
+      const idxS2 = (state.outputs[1] << 1) | state.outputs[0];
+      state.servo1Angle = SERVO1_MAP[idxS1];
+      state.servo2Angle = SERVO2_MAP[idxS2];
+
+      renderUI(gateInfo);
+      sendToEsp32IfConnected();
+      publishToWokwiLive();
+    }
+
+    function setMode(newMode) {
+      state.mode = newMode;
+      const btnBin = document.getElementById('btn-mode-binary');
+      const btnGates = document.getElementById('btn-mode-gates');
+
+      if (newMode === 'BINARY') {
+        btnBin.className = 'btn-tab active-black';
+        btnGates.className = 'btn-tab inactive-white';
+      } else {
+        btnBin.className = 'btn-tab inactive-white';
+        btnGates.className = 'btn-tab active-black';
+      }
+
+      recalculateSystem();
+    }
+
+    function toggleBit(bitIndex, forceGatesMode = false) {
+      if (forceGatesMode && state.mode !== 'GATES') {
+        state.mode = 'GATES';
+        setMode('GATES');
+      }
+      state.inputs[bitIndex] = state.inputs[bitIndex] === 1 ? 0 : 1;
+      recalculateSystem();
+    }
+
+    function setRawInputs(b3, b2, b1, b0) {
+      state.inputs = [b0, b1, b2, b3];
+      recalculateSystem();
+    }
+
+    function renderUI(gateInfo) {
+      const e3 = state.inputs[3], e2 = state.inputs[2], e1 = state.inputs[1], e0 = state.inputs[0];
+      const s3 = state.outputs[3], s2 = state.outputs[2], s1 = state.outputs[1], s0 = state.outputs[0];
+
+      const inBin  = `${e3}${e2}${e1}${e0}`;
+      const inDec  = (e3 << 3) | (e2 << 2) | (e1 << 1) | e0;
+      const outBin = `${s3}${s2}${s1}${s0}`;
+      const outDec = (s3 << 3) | (s2 << 2) | (s1 << 1) | s0;
+
+      const pwm1 = angleToPwmUs(state.servo1Angle);
+      const pwm2 = angleToPwmUs(state.servo2Angle);
+
+      document.getElementById('strip-mode').textContent =
+        state.mode === 'BINARY' ? 'MODO 1 // BINARIO 4B' : 'MODO 2 // COMPUERTAS';
+      document.getElementById('strip-input').textContent = `${inBin} (DEC ${inDec})`;
+      document.getElementById('strip-output').textContent = `${outBin} (DEC ${outDec})`;
+      document.getElementById('strip-s1').textContent = `${state.servo1Angle}° // ${pwm1} µS`;
+      document.getElementById('strip-s2').textContent = `${state.servo2Angle}° // ${pwm2} µS`;
+
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById(`btn-bit-${i}`);
+        const val = state.inputs[i];
+        btn.textContent = val;
+        btn.className = val === 1 ? 'bit-btn active-black' : 'bit-btn inactive-white';
+
+        const outBox = document.getElementById(`out-box-${i}`);
+        const outVal = state.outputs[i];
+        outBox.textContent = `S${i} = ${outVal}`;
+        outBox.className = outVal === 1 ? 'out-cell active-black' : 'out-cell inactive-white';
+      }
+
+      document.getElementById('out-decimal-label').textContent = `PATRÓN: ${outBin} (DEC ${outDec})`;
+
+      const wokwiCmd = `${state.mode === 'BINARY' ? 'M1' : 'M2'}:${inBin}`;
+      const wokwiBtn = document.getElementById('btn-wokwi-copy');
+      if (wokwiBtn) {
+        wokwiBtn.textContent = `COPIAR PARA WOKWI: ${wokwiCmd}`;
+        wokwiBtn.dataset.cmd = wokwiCmd;
+      }
+
+      const gateOuts = [
+        { id: 's3', val: gateInfo.s3 },
+        { id: 's2', val: gateInfo.s2 },
+        { id: 's1', val: gateInfo.s1 },
+        { id: 's0', val: gateInfo.s0 }
+      ];
+      gateOuts.forEach(item => {
+        const badge = document.getElementById(`eq-val-${item.id}`);
+        badge.textContent = `${item.id.toUpperCase()} = ${item.val}`;
+        badge.className = item.val === 1 ? 'eq-badge active-black' : 'eq-badge inactive-white';
+      });
+
+      const banner = document.getElementById('gates-inactive-banner');
+      const statusBadge = document.getElementById('gates-status-badge');
+
+      if (state.mode === 'GATES') {
+        banner.style.display = 'none';
+        statusBadge.textContent = 'ACTIVO // 74HC04/08/32';
+        document.getElementById('badge-input-mode').textContent = 'ENTRADAS COMPUERTAS';
+        document.getElementById('mode-helper-text').textContent =
+          'MODO 2 (COMPUERTAS): LAS ENTRADAS [E3 E2 E1 E0] PASAN POR LAS COMPUERTAS AND, OR, NOT Y GENERAN EL PATRÓN [S3 S2 S1 S0].';
+        document.getElementById('lbl-bit3').textContent = 'E3';
+        document.getElementById('lbl-bit2').textContent = 'E2';
+        document.getElementById('lbl-bit1').textContent = 'E1';
+        document.getElementById('lbl-bit0').textContent = 'E0';
+        document.getElementById('role-bit3').textContent = 'AGARRE FIRME';
+        document.getElementById('role-bit2').textContent = 'PRE-AGARRE';
+        document.getElementById('role-bit1').textContent = 'SUBIR BRAZO';
+        document.getElementById('role-bit0').textContent = 'ELEVAR +45°';
+      } else {
+        banner.style.display = 'block';
+        statusBadge.textContent = 'EN ESPERA (MODO 1)';
+        document.getElementById('badge-input-mode').textContent = 'PALABRA BINARIA 4B';
+        document.getElementById('mode-helper-text').textContent =
+          'MODO 1 (BINARIO): [B3 B2] CONTROLAN SERVO 1 (PINZA AGARRAR/SOLTAR) Y [B1 B0] CONTROLAN SERVO 2 (BRAZO SUBIR/BAJAR).';
+        document.getElementById('lbl-bit3').textContent = 'B3 (2³)';
+        document.getElementById('lbl-bit2').textContent = 'B2 (2²)';
+        document.getElementById('lbl-bit1').textContent = 'B1 (2¹)';
+        document.getElementById('lbl-bit0').textContent = 'B0 (2⁰)';
+        document.getElementById('role-bit3').textContent = 'PINZA MSB';
+        document.getElementById('role-bit2').textContent = 'PINZA LSB';
+        document.getElementById('role-bit1').textContent = 'BRAZO MSB';
+        document.getElementById('role-bit0').textContent = 'BRAZO LSB';
+      }
+
+      document.getElementById('sim-action-badge').textContent = `SALIDA: ${outBin} (DEC ${outDec})`;
+
+      renderGatesSVG(e3, e2, e1, e0, gateInfo);
+      renderClawCanvas(state.servo1Angle, state.servo2Angle, pwm1, pwm2);
+    }
+
+    function renderGatesSVG(e3, e2, e1, e0, g) {
+      const svg = document.getElementById('gates-svg');
+      const w = (bit) => bit ? 'stroke-width="2.5"' : 'stroke-width="1" stroke-dasharray="3,2"';
+      const box = (x, y, wBox, label, active) => `
+        <rect x="${x}" y="${y}" width="${wBox}" height="26" fill="${active ? '#000000' : '#ffffff'}" stroke="#000000" stroke-width="1.5"/>
+        <text x="${x + wBox / 2}" y="${y + 16}" text-anchor="middle" font-size="9" font-weight="bold" fill="${active ? '#ffffff' : '#000000'}">${label}</text>
+      `;
+      const pin = (x, y, text, active, bitIndex = null) => `
+        <g ${bitIndex !== null ? `onclick="toggleBit(${bitIndex}, true)" style="cursor:pointer"` : ''}>
+          <rect x="${x}" y="${y}" width="42" height="26" fill="${active ? '#000000' : '#ffffff'}" stroke="#000000" stroke-width="1.5"/>
+          <text x="${x + 21}" y="${y + 16}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${active ? '#ffffff' : '#000000'}">${text}</text>
+        </g>
+      `;
+
+      const rows = [
+        { y: 14,  inLabel: 'E3=' + e3, inVal: e3, bit: 3, andLbl: 'AND(E2·E1)',   andVal: g.and3, orLbl: 'OR(E3+AND)', sLbl: 'S3=' + g.s3, sVal: g.s3 },
+        { y: 66,  inLabel: 'E2=' + e2, inVal: e2, bit: 2, andLbl: 'AND(E3·E1\')', andVal: g.and2, orLbl: 'OR(E2+AND)', sLbl: 'S2=' + g.s2, sVal: g.s2 },
+        { y: 118, inLabel: 'E1=' + e1, inVal: e1, bit: 1, andLbl: 'AND(E3·E0)',   andVal: g.and1, orLbl: 'OR(E1+AND)', sLbl: 'S1=' + g.s1, sVal: g.s1 },
+        { y: 170, inLabel: 'E0=' + e0, inVal: e0, bit: 0, andLbl: 'AND(E2·E3\')', andVal: g.and0, orLbl: 'OR(E0+AND)', sLbl: 'S0=' + g.s0, sVal: g.s0 }
+      ];
+
+      let content = '';
+      rows.forEach(r => {
+        const midY = r.y + 13;
+        content += `
+          ${pin(8, r.y, r.inLabel, r.inVal, r.bit)}
+          <line x1="50" y1="${midY - 5}" x2="205" y2="${midY - 5}" stroke="#000000" ${w(r.inVal)} />
+          <line x1="50" y1="${midY + 5}" x2="82" y2="${midY + 5}" stroke="#000000" ${w(r.andVal)} />
+          ${box(82, r.y, 92, r.andLbl, r.andVal)}
+          <line x1="174" y1="${midY + 5}" x2="205" y2="${midY + 5}" stroke="#000000" ${w(r.andVal)} />
+          ${box(205, r.y, 88, r.orLbl, r.sVal)}
+          <line x1="293" y1="${midY}" x2="328" y2="${midY}" stroke="#000000" ${w(r.sVal)} />
+          ${pin(328, r.y, r.sLbl, r.sVal, null)}
+        `;
+      });
+
+      svg.innerHTML = content;
+    }
+
+    function renderClawCanvas(s1Angle, s2Angle, pwm1, pwm2) {
+      const canvas = document.getElementById('clawCanvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = '#000000';
+      for (let x = 20; x < W; x += 20) {
+        for (let y = 20; y < 235; y += 20) {
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(15, 225);
+      ctx.lineTo(W - 15, 225);
+      ctx.stroke();
+
+      const baseX = 115;
+      const baseY = 195;
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(baseX - 28, baseY, 56, 30);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('SERVO 2', baseX - 21, baseY + 18);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(baseX, baseY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      const armRad = ((-10 - (s2Angle * 0.65)) * Math.PI) / 180;
+      const armLen = 125;
+      const wristX = baseX + Math.cos(armRad) * armLen;
+      const wristY = baseY + Math.sin(armRad) * armLen;
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(wristX, wristY);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(wristX, wristY);
+      ctx.stroke();
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(wristX - 18, wristY - 12, 36, 24);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('S1', wristX - 6, wristY + 3);
+
+      const spread = ((90 - s1Angle) / 90) * 0.58 + 0.06;
+      const jawLen = 46;
+
+      const j1x = wristX + Math.cos(armRad - spread) * jawLen;
+      const j1y = wristY + Math.sin(armRad - spread) * jawLen;
+      const j2x = wristX + Math.cos(armRad + spread) * jawLen;
+      const j2y = wristY + Math.sin(armRad + spread) * jawLen;
+
+      const tip1x = j1x + Math.cos(armRad + 0.35) * 22;
+      const tip1y = j1y + Math.sin(armRad + 0.35) * 22;
+      const tip2x = j2x + Math.cos(armRad - 0.35) * 22;
+      const tip2y = j2y + Math.sin(armRad - 0.35) * 22;
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(wristX + 10, wristY - 4);
+      ctx.lineTo(j1x, j1y);
+      ctx.lineTo(tip1x, tip1y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(wristX + 10, wristY + 4);
+      ctx.lineTo(j2x, j2y);
+      ctx.lineTo(tip2x, tip2y);
+      ctx.stroke();
+
+      const isGripping = s1Angle >= 60;
+      const cubeX = isGripping ? (tip1x + tip2x) / 2 - 11 : 255;
+      const cubeY = isGripping ? (tip1y + tip2y) / 2 - 11 : 201;
+
+      ctx.fillStyle = isGripping ? '#000000' : '#ffffff';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.fillRect(cubeX, cubeY, 22, 22);
+      ctx.strokeRect(cubeX, cubeY, 22, 22);
+      ctx.fillStyle = isGripping ? '#ffffff' : '#000000';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText('OBJ', cubeX + 3, cubeY + 14);
+
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(`SERVO 1 (PINZA): ${s1Angle}° [${s1Angle === 0 ? 'SOLTAR' : s1Angle >= 90 ? 'AGARRE FIRME' : 'AGARRE PARCIAL'}]`, 14, 18);
+      ctx.fillText(`SERVO 2 (BRAZO): ${s2Angle}° [${s2Angle === 0 ? 'ABAJO' : 'ARRIBA'}]`, 14, 34);
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 240);
+      ctx.lineTo(W, 240);
+      ctx.stroke();
+
+      drawPwmWave(ctx, 14, 255, W - 28, 30, 'PWM SERVO 1 (PINZA)', pwm1);
+      drawPwmWave(ctx, 14, 298, W - 28, 30, 'PWM SERVO 2 (BRAZO)', pwm2);
+    }
+
+    function drawPwmWave(ctx, x, y, width, height, label, pulseUs) {
+      const dutyRatio = Math.min(0.85, Math.max(0.1, pulseUs / 3000));
+      const periodPx = Math.floor(width / 3);
+
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(`${label}: ${pulseUs} µS (${(pulseUs / 200).toFixed(1)}% @ 50HZ)`, x, y - 3);
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      for (let i = 0; i < 3; i++) {
+        const startX = x + i * periodPx;
+        const highW = Math.floor(periodPx * dutyRatio);
+        const endX = startX + periodPx;
+
+        ctx.moveTo(startX, y + height - 4);
+        ctx.lineTo(startX, y + 6);
+        ctx.lineTo(startX + highW, y + 6);
+        ctx.lineTo(startX + highW, y + height - 4);
+        ctx.lineTo(endX, y + height - 4);
+      }
+      ctx.stroke();
+    }
+
+    async function connectSerial() {
+      const btn = document.getElementById('btn-serial');
+      if (!('serial' in navigator)) {
+        alert('USA CHROME O EDGE PARA CONECTAR POR USB AL ESP32.');
+        return;
+      }
+      try {
+        state.serialPort = await navigator.serial.requestPort();
+        await state.serialPort.open({ baudRate: 115200 });
+        const encoder = new TextEncoderStream();
+        encoder.readable.pipeTo(state.serialPort.writable);
+        state.serialWriter = encoder.writable.getWriter();
+        btn.textContent = 'ESP32 CONECTADO (USB)';
+        btn.className = 'btn-ctrl active-black';
+        sendToEsp32IfConnected();
+      } catch (err) {
+        console.warn('Conexión Serial cancelada:', err);
+      }
+    }
+
+    // =========================================================================
+    // PUENTE EN VIVO CON WOKWI (MQTT SOBRE WEBSOCKET SIN LIBRERÍAS EXTERNAS)
+    // =========================================================================
+    let wokwiWs = null;
+    let wokwiConnected = false;
+    let suppressEcho = false;
+    const TOPIC_CMD   = 'ed-garra-luist-2026/cmd';
+    const TOPIC_STATE = 'ed-garra-luist-2026/state';
+
+    function initWokwiLiveBridge() {
+      const btn = document.getElementById('btn-wokwi-live');
+      if (wokwiWs && (wokwiWs.readyState === WebSocket.OPEN || wokwiWs.readyState === WebSocket.CONNECTING)) {
+        publishToWokwiLive();
+        return;
+      }
+
+      try {
+        btn.textContent = 'WOKWI EN VIVO: CONECTANDO...';
+        btn.className = 'btn-ctrl inactive-white';
+        wokwiWs = new WebSocket('wss://broker.hivemq.com:8884/mqtt', 'mqtt');
+        wokwiWs.binaryType = 'arraybuffer';
+
+        wokwiWs.onopen = () => {
+          const enc = new TextEncoder();
+          const cid = enc.encode('html_' + Math.random().toString(16).slice(2, 8));
+          const conn = new Uint8Array(14 + cid.length);
+          conn.set([0x10, 12 + cid.length, 0x00, 0x04, 77, 81, 84, 84, 0x04, 0x02, 0x00, 0x3C, 0x00, cid.length]);
+          conn.set(cid, 14);
+          wokwiWs.send(conn);
+
+          setTimeout(() => {
+            if (!wokwiWs || wokwiWs.readyState !== WebSocket.OPEN) return;
+            const tBytes = enc.encode(TOPIC_STATE);
+            const sub = new Uint8Array(7 + tBytes.length);
+            sub.set([0x82, 5 + tBytes.length, 0x00, 0x01, 0x00, tBytes.length]);
+            sub.set(tBytes, 6);
+            sub[6 + tBytes.length] = 0x00;
+            wokwiWs.send(sub);
+
+            wokwiConnected = true;
+            btn.textContent = 'WOKWI EN VIVO: SINCRONIZADO';
+            btn.className = 'btn-ctrl active-black';
+            publishToWokwiLive();
+          }, 250);
+        };
+
+        wokwiWs.onmessage = (evt) => {
+          const data = new Uint8Array(evt.data);
+          if (data.length >= 4 && (data[0] & 0xF0) === 0x30) {
+            const topicLen = (data[2] << 8) | data[3];
+            const payloadBytes = data.slice(4 + topicLen);
+            const msg = new TextDecoder().decode(payloadBytes).trim();
+            if ((msg.startsWith('M1:') || msg.startsWith('M2:')) && msg.length >= 7) {
+              suppressEcho = true;
+              state.mode = msg.charAt(1) === '2' ? 'GATES' : 'BINARY';
+              state.inputs[3] = msg.charAt(3) === '1' ? 1 : 0;
+              state.inputs[2] = msg.charAt(4) === '1' ? 1 : 0;
+              state.inputs[1] = msg.charAt(5) === '1' ? 1 : 0;
+              state.inputs[0] = msg.charAt(6) === '1' ? 1 : 0;
+              const btnBin = document.getElementById('btn-mode-binary');
+              const btnGates = document.getElementById('btn-mode-gates');
+              if (state.mode === 'BINARY') {
+                btnBin.className = 'btn-tab active-black';
+                btnGates.className = 'btn-tab inactive-white';
+              } else {
+                btnBin.className = 'btn-tab inactive-white';
+                btnGates.className = 'btn-tab active-black';
+              }
+              recalculateSystem();
+              suppressEcho = false;
+            }
+          }
+        };
+
+        wokwiWs.onclose = () => {
+          wokwiConnected = false;
+          btn.textContent = 'WOKWI EN VIVO: RECONECTAR';
+          btn.className = 'btn-ctrl inactive-white';
+        };
+
+        wokwiWs.onerror = () => {
+          wokwiConnected = false;
+          btn.textContent = 'WOKWI: SIN RED (USA DATOS)';
+          btn.className = 'btn-ctrl inactive-white';
+        };
+      } catch (e) {
+        console.warn('Error WebSocket Wokwi:', e);
+      }
+    }
+
+    function publishToWokwiLive() {
+      if (suppressEcho || !wokwiConnected || !wokwiWs || wokwiWs.readyState !== WebSocket.OPEN) return;
+      try {
+        const enc = new TextEncoder();
+        const inBin = `${state.inputs[3]}${state.inputs[2]}${state.inputs[1]}${state.inputs[0]}`;
+        const cmd = `${state.mode === 'BINARY' ? 'M1' : 'M2'}:${inBin}`;
+        const tBytes = enc.encode(TOPIC_CMD);
+        const mBytes = enc.encode(cmd);
+        const pub = new Uint8Array(4 + tBytes.length + mBytes.length);
+        pub[0] = 0x30;
+        pub[1] = 2 + tBytes.length + mBytes.length;
+        pub[2] = 0x00;
+        pub[3] = tBytes.length;
+        pub.set(tBytes, 4);
+        pub.set(mBytes, 4 + tBytes.length);
+        wokwiWs.send(pub);
+      } catch (e) {
+        console.warn('Error publicando a Wokwi:', e);
+      }
+    }
+
+    setInterval(() => {
+      if (wokwiConnected && wokwiWs && wokwiWs.readyState === WebSocket.OPEN) {
+        wokwiWs.send(new Uint8Array([0xC0, 0x00]));
+      }
+    }, 20000);
+
+    async function sendToEsp32IfConnected() {
+      if (!state.serialWriter) return;
+      try {
+        const inBin = `${state.inputs[3]}${state.inputs[2]}${state.inputs[1]}${state.inputs[0]}`;
+        const cmd = `MODE:${state.mode};IN:${inBin};S1:${state.servo1Angle};S2:${state.servo2Angle};PAT:${state.outputs[3]}${state.outputs[2]}${state.outputs[1]}${state.outputs[0]}\n`;
+        await state.serialWriter.write(cmd);
+      } catch (e) {
+        console.warn('Error enviando al ESP32:', e);
+      }
+    }
+
+    recalculateSystem();
+    initWokwiLiveBridge();
+  </script>
+</body>
+</html>

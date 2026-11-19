@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "author": "Luis Carpio, Matilde De la Hoz, Alam Sanchez, Mateo Vargas",
+  "editor": "wokwi",
+  "serialMonitor": {
+    "display": "always",
+    "newline": "lf"
+  },
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 20,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_pinza",
+      "top": -20,
+      "left": -155,
+      "attrs": { "hornColor": "white", "label": "SERVO 1 (PINZA)" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_brazo",
+      "top": 110,
+      "left": -155,
+      "attrs": { "hornColor": "white", "label": "SERVO 2 (BRAZO)" }
+    },
+    {
+      "type": "wokwi-slide-switch",
+      "id": "sw_modo",
+      "top": -75,
+      "left": 185,
+      "attrs": { "value": "0" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_b3",
+      "top": 5,
+      "left": 190,
+      "attrs": { "color": "purple", "label": "B3 / E3 (MSB)" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_b2",
+      "top": 65,
+      "left": 190,
+      "attrs": { "color": "blue", "label": "B2 / E2" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_b1",
+      "top": 125,
+      "left": 190,
+      "attrs": { "color": "green", "label": "B1 / E1" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_b0",
+      "top": 185,
+      "left": 190,
+      "attrs": { "color": "yellow", "label": "B0 / E0 (LSB)" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "servo_pinza:PWM", "esp:25", "orange", [ "h0" ] ],
+    [ "servo_pinza:V+", "esp:5V", "red", [ "h0" ] ],
+    [ "servo_pinza:GND", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "servo_brazo:PWM", "esp:26", "orange", [ "h0" ] ],
+    [ "servo_brazo:V+", "esp:5V", "red", [ "h0" ] ],
+    [ "servo_brazo:GND", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "sw_modo:1", "esp:GND.2", "black", [ "v0" ] ],
+    [ "sw_modo:2", "esp:4", "white", [ "v0" ] ],
+    [ "sw_modo:3", "esp:3V3", "red", [ "v0" ] ],
+
+    [ "btn_b3:1.l", "esp:3V3", "red", [ "h-20" ] ],
+    [ "btn_b3:2.l", "esp:19", "purple", [ "h-30" ] ],
+
+    [ "btn_b2:1.l", "esp:3V3", "red", [ "h-20" ] ],
+    [ "btn_b2:2.l", "esp:18", "blue", [ "h-30" ] ],
+
+    [ "btn_b1:1.l", "esp:3V3", "red", [ "h-20" ] ],
+    [ "btn_b1:2.l", "esp:17", "green", [ "h-30" ] ],
+
+    [ "btn_b0:1.l", "esp:3V3", "red", [ "h-20" ] ],
+    [ "btn_b0:2.l", "esp:16", "yellow", [ "h-30" ] ]
+  ],
+  "dependencies": {}
+}
