@@ -1,0 +1,9 @@
+/* Paleta de colores: un color = un significado en toda la interfaz */
+:root {
+  --giro: #2563eb;       --giro-soft: #dbeafe;   --giro-dark: #1d4ed8;     /* GIRO de la pluma  */
+  --izaje: #ea580c;      --izaje-soft: #ffedd5;  --izaje-dark: #c2410c;    /* IZAJE del gancho  */
+  --alerta: #dc2626;     --alerta-soft: #fee2e2;                           /* INTERLOCK         */
+  --ok: #15803d;                                                           /* modo / conexión activa */
+  --bg: #f1f5f9;         --card: #ffffff;
+  --ink: #0f172a;        --muted: #64748b;       --line: #cbd5e1;
+}

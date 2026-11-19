@@ -1,0 +1,86 @@
+/* Controles: botonera de bits, salida, ecuaciones, acciones rápidas y cruceta */
+
+/* Botonera de 4 bits (azul = giro, naranja = izaje) */
+.buttons-4-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.bit-card {
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.bit-card.grp-giro { border-color: var(--giro); background: var(--giro-soft); }
+.bit-card.grp-izaje { border-color: var(--izaje); background: var(--izaje-soft); }
+.bit-card.grp-giro .bit-title, .bit-card.grp-giro .bit-role { color: var(--giro-dark); }
+.bit-card.grp-izaje .bit-title, .bit-card.grp-izaje .bit-role { color: var(--izaje-dark); }
+.bit-title { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.bit-wire { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+.bit-role { font-size: 11px; font-weight: 700; margin-top: 8px; }
+.bit-btn {
+  height: 36px;
+  width: 100%;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.bit-btn.on { color: #fff; border-color: transparent; }
+.bit-card.grp-giro .bit-btn.on { background: var(--giro); }
+.bit-card.grp-izaje .bit-btn.on { background: var(--izaje); }
+.bit-btn:hover { filter: brightness(0.95); }
+
+/* Salida de 4 bits */
+.out-pattern-box { border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.out-header { font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.out-4-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; font-size: 12px; font-weight: 700; }
+.out-cell { border: 2px solid var(--line); border-radius: 8px; padding: 8px 4px; background: #fff; color: var(--muted); }
+.out-cell.grp-giro.on { background: var(--giro); color: #fff; border-color: var(--giro); }
+.out-cell.grp-izaje.on { background: var(--izaje); color: #fff; border-color: var(--izaje); }
+
+/* Acciones rápidas */
+.preset-grid { padding: 0 12px 12px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Ecuaciones booleanas */
+.eq-list { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 12px; }
+.eq-row {
+  padding: 7px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.eq-row:last-child { border-bottom: none; }
+.eq-row.grp-giro { border-left: 5px solid var(--giro); }
+.eq-row.grp-izaje { border-left: 5px solid var(--izaje); }
+.eq-badge { font-weight: 700; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
+.eq-row.grp-giro .eq-badge.on { background: var(--giro); color: #fff; border-color: var(--giro); }
+.eq-row.grp-izaje .eq-badge.on { background: var(--izaje); color: #fff; border-color: var(--izaje); }
+
+/* Cruceta (D-pad) */
+.dpad-box { margin: 0 12px 12px 12px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #f8fafc; }
+.dpad-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; text-align: center; }
+.dpad { display: grid; grid-template-columns: repeat(3, 72px); grid-auto-rows: 64px; gap: 6px; justify-content: center; }
+.dpad-btn {
+  border: none; border-radius: 12px; color: #fff; font-size: 22px; font-weight: 700; font-family: inherit;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;
+  transition: transform 0.05s, filter 0.1s;
+}
+.dpad-btn small { font-size: 10px; font-weight: 600; opacity: 0.9; }
+.dpad-btn.giro { background: var(--giro); }
+.dpad-btn.izaje { background: var(--izaje); }
+.dpad-btn.home { background: #475569; }
+.dpad-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.dpad-btn:active:not(:disabled) { transform: scale(0.94); }
+.dpad-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+.dpad-state { margin-top: 10px; text-align: center; font-size: 12px; color: var(--muted); }
