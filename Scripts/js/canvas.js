@@ -1,220 +1,198 @@
-// Dibujo de la grúa en el canvas (vista lateral + vista superior) y ondas PWM
+// Dibujo de la grúa en el canvas (vista lateral acotada + vista superior + specs) y ondas PWM
 
 function renderCraneCanvas(s1Angle, s2Angle, pwm1, pwm2, interlock) {
   const canvas = document.getElementById('craneCanvas');
   const ctx = canvas.getContext('2d');
   const W = canvas.width;
-  const H = canvas.height;
 
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.fillStyle = '#e2e8f0';
-  for (let x = 20; x < W; x += 20) {
-    for (let y = 20; y < 235; y += 20) {
-      ctx.fillRect(x, y, 1, 1);
-    }
-  }
-
-  // Suelo
-  ctx.fillStyle = COLOR.ground;
-  ctx.fillRect(0, 225, 290, 15);
-  ctx.strokeStyle = '#64748b';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, 225);
-  ctx.lineTo(290, 225);
-  ctx.stroke();
-
+  // Paleta original: azul = giro, naranja = izaje, rojo = interlock, grises = estructura
+  const C = {
+    bg: '#ffffff', panel: '#f8fafc', line: '#cbd5e1', text: '#0f172a', mute: '#64748b',
+    dim: '#475569', fill: '#e2e8f0', stroke: '#475569',
+    blue: COLOR.giro, blueDark: '#1d4ed8', blueSoft: COLOR.giroSoft,
+    orange: COLOR.izaje, orangeDark: '#c2410c', orangeSoft: COLOR.izajeSoft,
+    red: COLOR.alerta, redDark: '#991b1b',
+    ground: '#64748b', guide: '#cbd5e1', off: COLOR.off, slate: '#475569'
+  };
   const gIdx = GIRO_MAP.indexOf(s1Angle);
   const zIdx = IZAJE_MAP.indexOf(s2Angle);
 
-  // Barra con contorno de color y relleno claro
-  const bar = (x1, y1, x2, y2, outer, inner, color, soft) => {
-    ctx.lineCap = 'butt';
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, canvas.height);
+
+  const mono = (px, bold) => { ctx.font = `${bold ? 'bold ' : ''}${px}px monospace`; };
+  const line = (x1, y1, x2, y2, color, w, dash) => {
     ctx.strokeStyle = color;
-    ctx.lineWidth = outer;
+    ctx.lineWidth = w || 1;
+    ctx.setLineDash(dash || []);
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.strokeStyle = soft;
-    ctx.lineWidth = inner;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+  };
+  const arrow = (x1, y1, x2, y2) => {
+    line(x1, y1, x2, y2, C.dim, 1);
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    [[x1, y1, 1], [x2, y2, -1]].forEach(([x, y, s]) => {
+      ctx.fillStyle = C.dim;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + s * 6 * Math.cos(a - 0.4), y + s * 6 * Math.sin(a - 0.4));
+      ctx.lineTo(x + s * 6 * Math.cos(a + 0.4), y + s * 6 * Math.sin(a + 0.4));
+      ctx.fill();
+    });
+  };
+  const box = (x, y, w, h, fill, stroke) => {
+    ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 1.5;
+    ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+  };
+  const circle = (x, y, r, fill, stroke, w) => {
+    ctx.fillStyle = fill;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w || 1.5; ctx.stroke(); }
+  };
+  const panel = (y, h, title) => {
+    ctx.fillStyle = C.panel; ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+    ctx.fillRect(4, y, W - 8, h); ctx.strokeRect(4.5, y + 0.5, W - 9, h - 1);
+    mono(10, true); ctx.fillStyle = C.text; ctx.fillText(title, 12, y + 15);
   };
 
-  // ---------- VISTA LATERAL (el cable sube/baja según Z) ----------
-  const mastX = 75;
-  const jibY = 48;
-  const tipX = 240;
-  const groundY = 225;
+  // =================== VISTA LATERAL ACOTADA ===================
+  panel(4, 262, 'VISTA LATERAL ACOTADA (ESCALA REAL mm)');
+  const k = 0.8;                       // px por mm
+  const gy = 246;                      // suelo
+  const mastX = 175;
+  const baseW = 160 * k, baseH = 45 * k;
+  const mastW = 18;
+  const jibY = gy - 210 * k;           // pluma a 210 mm
+  const jibL = mastX - 60 * k;         // brazo trasero 60 mm
+  const jibR = mastX + 140 * k;        // brazo delantero 140 mm
 
-  // Pedestal (caja) + mástil
-  ctx.fillStyle = '#475569';
-  ctx.fillRect(mastX - 32, 203, 64, groundY - 203);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 9px monospace';
-  ctx.fillText('PEDESTAL', mastX - 28, 218);
-  bar(mastX, 203, mastX, 58, 10, 4, '#475569', '#e2e8f0');
+  line(10, gy, W - 10, gy, C.ground, 2);
 
-  // Pluma horizontal (azul: la mueve el servo de giro)
-  bar(22, jibY, 250, jibY, 10, 4, COLOR.giro, COLOR.giroSoft);
+  // base con lastre y S1 interno
+  box(mastX - baseW / 2, gy - baseH, baseW, baseH, C.fill, C.stroke);
+  box(mastX - baseW / 2 + 8, gy - baseH + 20, 34, 12, '#cbd5e1', C.mute);
+  mono(8, false); ctx.fillStyle = C.text;
+  ctx.fillText('350g', mastX - baseW / 2 + 12, gy - baseH + 29);
+  box(mastX - 8, gy - baseH + 6, 16, 22, C.blue, C.blueDark);
+  mono(9, true); ctx.fillStyle = C.blue;
+  ctx.fillText('S1 Base (giro)', mastX + 76, gy - baseH + 20);
+  line(mastX + 10, gy - baseH + 17, mastX + 74, gy - baseH + 17, C.blue, 1, [2, 3]);
 
-  // Engranaje en lo alto del mástil (gira la pluma)
-  ctx.fillStyle = COLOR.giroSoft;
-  ctx.strokeStyle = COLOR.giro;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(mastX, jibY, 11, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.lineWidth = 1.5;
-  for (let k = 0; k < 8; k++) {
-    const a = (k * Math.PI) / 4 + (s1Angle * Math.PI) / 180;
-    ctx.beginPath();
-    ctx.moveTo(mastX + Math.cos(a) * 11, jibY + Math.sin(a) * 11);
-    ctx.lineTo(mastX + Math.cos(a) * 15, jibY + Math.sin(a) * 15);
-    ctx.stroke();
-  }
-  ctx.fillStyle = COLOR.giro;
-  ctx.font = 'bold 8px monospace';
-  ctx.fillText('S1', mastX - 5, jibY + 3);
+  // placa de giro y mástil
+  box(mastX - 30, gy - baseH - 5, 60, 5, C.blueSoft, C.blue);
+  box(mastX - mastW / 2, jibY + 7, mastW, gy - baseH - 5 - jibY - 7, C.fill, C.stroke);
 
-  // Caja en el extremo contrario: servo del carrete (S2) y contrapeso
-  ctx.fillStyle = COLOR.izaje;
-  ctx.fillRect(12, jibY + 6, 44, 26);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 9px monospace';
-  ctx.fillText('S2', 28, jibY + 17);
-  ctx.font = 'bold 7px monospace';
-  ctx.fillText('CARRETE', 15, jibY + 27);
+  // S2 + biela
+  // S2 (izaje, vertical) a media altura del mástil
+  const midY = (jibY + 7 + gy - baseH - 5) / 2;
+  box(mastX - 15, midY - 10, 30, 20, C.orange, C.orangeDark);
+  mono(9, true); ctx.fillStyle = '#ffffff';
+  ctx.fillText('S2', mastX - 7, midY + 3);
+  ctx.fillStyle = C.orange;
+  ctx.fillText('S2 + Biela (izaje)', mastX + 22, midY + 3);
+  line(mastX + 10, midY - 10, mastX + 24, jibY + 7, C.orangeDark, 2);
+  circle(mastX + 24, jibY + 7, 3, C.orangeSoft, C.orangeDark, 1.2);
 
-  // Polea en el otro extremo de la pluma
-  ctx.fillStyle = COLOR.izajeSoft;
-  ctx.strokeStyle = COLOR.izaje;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(tipX, jibY + 11, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  // pluma y tirantes
+  box(jibL, jibY - 7, jibR - jibL, 14, C.fill, C.stroke);
+  line(jibL + 8, jibY - 15, jibR, jibY - 6, C.text, 1);
+  line(jibL + 8, jibY - 15, mastX, jibY - 7, C.text, 1);
 
-  // Escala de niveles Z0..Z3 (el nivel actual se resalta) y posición del gancho
-  const hookY = 190 - zIdx * 33;
-  ctx.font = 'bold 8px monospace';
+  // contrapeso 50 g y poleas
+  box(jibL - 4, jibY - 6, 14, 12, C.slate, C.text);
+  mono(9, true); ctx.fillStyle = C.text; ctx.fillText('50g', jibL - 14, jibY - 12);
+  circle(mastX - 14, jibY - 2, 6, C.bg, C.text, 1.5);
+  circle(mastX + 6, jibY + 3, 3, C.bg, C.text, 1.2);
+  circle(jibR, jibY, 11, C.orangeSoft, C.orange, 2.5);
+  circle(jibR, jibY, 4, C.orange);
+
+  // cable, gancho y carga (según Z)
+  const hx = jibR + 10;
+  const hookY = (gy - 58) - zIdx * 32;
+  line(hx, jibY, hx, hookY, C.orange, 1.5);
+  box(hx - 5, hookY, 10, 7, C.orangeSoft, C.orange);
+  ctx.strokeStyle = C.orange; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(hx, hookY + 14, 6, Math.PI * 1.2, Math.PI * 2.7); ctx.stroke();
+  box(hx - 9, hookY + 22, 18, 14, interlock ? C.red : C.orange, interlock ? C.redDark : C.orangeDark);
+  mono(7, true); ctx.fillStyle = '#ffffff'; ctx.fillText('CARGA', hx - 9, hookY + 32);
+
+  // niveles Z
+  mono(8, true);
   for (let i = 0; i < 4; i++) {
-    const ty = 190 - i * 33;
+    const ty = (gy - 58) - i * 32;
     const on = i === zIdx;
-    ctx.fillStyle = on ? COLOR.izaje : COLOR.off;
-    ctx.fillRect(264, ty, 8, on ? 3 : 1);
-    ctx.fillText(`Z${i}${on ? ' ◄' : ''}`, 274, ty + 3);
+    ctx.fillStyle = on ? C.orange : C.off;
+    ctx.fillRect(W - 40, ty, 6, on ? 3 : 1);
+    ctx.fillText(`Z${i}${on ? '◄' : ''}`, W - 32, ty + 3);
   }
 
-  // Cable, gancho y carga (naranja: los mueve el servo de izaje)
-  ctx.strokeStyle = COLOR.izaje;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(tipX, jibY + 17);
-  ctx.lineTo(tipX, hookY);
-  ctx.stroke();
+  // cotas
+  mono(9, true); ctx.fillStyle = C.dim;
+  arrow(jibL, 36, mastX, 36);  ctx.fillText('60mm', jibL + 6, 32);
+  arrow(mastX, 36, jibR, 36);  ctx.fillText('140 mm', mastX + 45, 32);
+  [jibL, mastX, jibR].forEach(x => line(x, 28, x, jibY - 16, C.guide, 1, [2, 3]));
+  arrow(24, gy, 24, jibY);     ctx.fillText('210mm', 4, (gy + jibY) / 2 + 3);
+  line(24, jibY, jibL - 6, jibY, C.guide, 1, [2, 3]);
+  arrow(58, gy - baseH, 58, jibY + 7);  ctx.fillText('165mm', 38, (gy - baseH + jibY) / 2 + 12);
+  arrow(58, gy, 58, gy - baseH);        ctx.fillText('45mm', 34, gy - 12);
+  line(58, gy - baseH, mastX - baseW / 2, gy - baseH, C.guide, 1, [2, 3]);
+  arrow(mastX - baseW / 2, gy + 10, mastX + baseW / 2, gy + 10);
+  ctx.fillStyle = C.panel; ctx.fillRect(mastX - 24, gy + 4, 48, 12);
+  ctx.fillStyle = C.dim; ctx.fillText('160 mm', mastX - 22, gy + 13);
 
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(tipX, hookY + 6, 6, Math.PI * 1.1, Math.PI * 2.6);
-  ctx.stroke();
-
-  ctx.fillStyle = interlock ? COLOR.alerta : COLOR.izaje;
-  ctx.fillRect(tipX - 11, hookY + 13, 22, 22);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 8px monospace';
-  ctx.fillText('CARGA', tipX - 11, hookY + 27);
   if (interlock) {
-    ctx.fillStyle = COLOR.alerta;
-    ctx.font = 'bold 9px monospace';
-    ctx.fillText('INTERLOCK', 150, 150);
-    ctx.fillText('sube a Z1', 150, 162);
+    mono(9, true); ctx.fillStyle = C.red;
+    ctx.fillText('INTERLOCK: sube a Z1', 235, 130);
   }
 
-  // ---------- VISTA SUPERIOR (la pluma gira según G, 0°..135°) ----------
-  const cx = 362;
-  const cy = 150;
-  const R = 58;
-  ctx.strokeStyle = '#94a3b8';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(292, 40);
-  ctx.lineTo(292, 236);
-  ctx.stroke();
+  // =================== VISTA SUPERIOR (giro) ===================
+  const t0 = 270;
+  panel(t0, 190, 'VISTA SUPERIOR (GIRO 180°)');
+  const cx = 110, cy = t0 + 108, ks = 0.5, R = 140 * ks;
+  box(cx - 40 - 6, cy - 40 - 6, 92, 92, C.fill, C.stroke);
+  circle(cx, cy, 36, C.blueSoft, C.blue, 1);
 
-  // Arco de recorrido y marcas G0..G3
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath();
-  ctx.arc(cx, cy, R, -(135 * Math.PI) / 180, 0);
-  ctx.stroke();
+  ctx.strokeStyle = C.off; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.arc(cx, cy, R + 10, -Math.PI, 0); ctx.stroke();
   ctx.setLineDash([]);
+  ctx.strokeStyle = C.blue; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, R + 10, -(s1Angle * Math.PI) / 180, 0); ctx.stroke();
 
-  // Tramo ya recorrido (azul sólido) hasta la posición actual
-  ctx.strokeStyle = COLOR.giro;
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(cx, cy, R, -(s1Angle * Math.PI) / 180, 0);
-  ctx.stroke();
-  ctx.lineWidth = 1;
-
-  ctx.font = 'bold 8px monospace';
+  mono(8, true);
   GIRO_MAP.forEach((deg, i) => {
     const a = (deg * Math.PI) / 180;
-    const mx = cx + Math.cos(a) * (R + 4);
-    const my = cy - Math.sin(a) * (R + 4);
     const on = i === gIdx;
-    ctx.strokeStyle = on ? COLOR.giro : COLOR.off;
-    ctx.fillStyle = on ? COLOR.giro : '#64748b';
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(a) * (R - 4), cy - Math.sin(a) * (R - 4));
-    ctx.lineTo(mx, my);
-    ctx.stroke();
-    ctx.fillText(`G${i}`, cx + Math.cos(a) * (R + 8) - 6, cy - Math.sin(a) * (R + 8) + 3);
+    line(cx + Math.cos(a) * (R + 6), cy - Math.sin(a) * (R + 6),
+         cx + Math.cos(a) * (R + 16), cy - Math.sin(a) * (R + 16), on ? C.blue : C.off, 1.5);
+    ctx.fillStyle = on ? C.blue : C.mute;
+    ctx.fillText(`G${i}`, cx + Math.cos(a) * (R + 24) - 6, cy - Math.sin(a) * (R + 24) + 3);
   });
 
   const ang = (s1Angle * Math.PI) / 180;
-  const jibTipX = cx + Math.cos(ang) * R;
-  const jibTipY = cy - Math.sin(ang) * R;
-  const jibBackX = cx - Math.cos(ang) * 24;
-  const jibBackY = cy + Math.sin(ang) * 24;
-  bar(jibBackX, jibBackY, jibTipX, jibTipY, 8, 3, COLOR.giro, COLOR.giroSoft);
+  const tipX = cx + Math.cos(ang) * R, tipY = cy - Math.sin(ang) * R;
+  const backX = cx - Math.cos(ang) * 60 * ks, backY = cy + Math.sin(ang) * 60 * ks;
+  line(backX, backY, tipX, tipY, C.blue, 5);
+  circle(backX, backY, 4, C.orange);
+  circle(tipX, tipY, 6, interlock ? C.red : C.orange, interlock ? C.redDark : C.orangeDark, 1.5);
+  circle(cx, cy, 6, C.slate, C.off, 1.5);
 
-  ctx.fillStyle = COLOR.izaje;
-  ctx.fillRect(jibBackX - 5, jibBackY - 5, 10, 10);
-  ctx.fillStyle = interlock ? COLOR.alerta : COLOR.izajeSoft;
-  ctx.strokeStyle = interlock ? COLOR.alerta : COLOR.izaje;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(jibTipX, jibTipY, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#475569';
-  ctx.strokeStyle = '#475569';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  // estado actual
+  mono(10, true);
+  ctx.fillStyle = C.blue;   ctx.fillText(`GIRO  G${gIdx} = ${s1Angle}°`, 14, t0 + 34);
+  ctx.fillStyle = C.orange; ctx.fillText(`IZAJE Z${zIdx} = ${s2Angle}°`, 14, t0 + 48);
 
-  // ---------- Textos ----------
-  ctx.font = 'bold 11px monospace';
-  ctx.fillStyle = COLOR.giro;
-  ctx.fillText(`GIRO:  G${gIdx} = ${s1Angle}°`, 14, 18);
-  ctx.fillStyle = COLOR.izaje;
-  ctx.fillText(`IZAJE: Z${zIdx} = ${s2Angle}° ${zIdx === 0 ? '(abajo)' : zIdx === 3 ? '(arriba)' : ''}`, 14, 34);
-  ctx.font = 'bold 9px monospace';
-  ctx.fillStyle = '#64748b';
-  ctx.fillText('VISTA LATERAL', 150, 236);
-  ctx.fillText('VISTA SUPERIOR', 300, 236);
+  // especificaciones reales
+  const sx = 250, sy = t0 + 34, sw = W - sx - 12, sh = 142;
+  ctx.fillStyle = '#ffffff'; ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+  ctx.fillRect(sx, sy, sw, sh); ctx.strokeRect(sx + 0.5, sy + 0.5, sw - 1, sh - 1);
+  mono(10, true); ctx.fillStyle = C.text; ctx.fillText('ESPECIFICACIONES', sx + 8, sy + 18);
+  mono(9, false); ctx.fillStyle = C.mute;
+  ['• Carga segura: 20–50 g', '  (brazo 140 mm)', '• Base 160×160 mm c/', '  350 g lastre interno', '• Servo 3 atrás =', '  contrapeso + hilo cte.', '• 3× SG90']
+    .forEach((t, i) => ctx.fillText(t, sx + 8, sy + 38 + i * 14));
 
-  ctx.strokeStyle = '#94a3b8';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, 240);
-  ctx.lineTo(W, 240);
-  ctx.stroke();
-
-  drawPwmWave(ctx, 14, 255, W - 28, 30, 'PWM servo 1 (giro)', pwm1, COLOR.giro);
-  drawPwmWave(ctx, 14, 298, W - 28, 30, 'PWM servo 2 (izaje)', pwm2, COLOR.izaje);
+  // =================== PWM ===================
+  drawPwmWave(ctx, 14, 486, W - 28, 30, 'PWM servo 1 (giro)', pwm1, C.blue);
+  drawPwmWave(ctx, 14, 534, W - 28, 30, 'PWM servo 2 (izaje)', pwm2, C.orange);
 }
 
 function drawPwmWave(ctx, x, y, width, height, label, pulseUs, color) {
