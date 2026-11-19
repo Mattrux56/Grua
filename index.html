@@ -5,12 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CONTROL GRÚA TORRE 2-GDL // ESP32 + 4 BITS</title>
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      text-shadow: none !important;
+    :root {
+      --giro: #2563eb;       --giro-soft: #dbeafe;   --giro-dark: #1d4ed8;
+      --izaje: #ea580c;      --izaje-soft: #ffedd5;  --izaje-dark: #c2410c;
+      --alerta: #dc2626;     --alerta-soft: #fee2e2;
+      --ok: #15803d;         --ok-soft: #dcfce7;
+      --bg: #f1f5f9;         --card: #ffffff;
+      --ink: #0f172a;        --muted: #64748b;       --line: #cbd5e1;
     }
+    *, *::before, *::after { box-sizing: border-box; }
 
     body {
       background-color: #ffffff;
@@ -180,6 +183,93 @@
 
     .info-box { border: 1px solid #000000; padding: 8px; font-size: 11px; }
     canvas, svg { width: 100%; height: auto; border: 1px solid #000000; background-color: #ffffff; display: block; }
+
+    /* ===================== TEMA CON COLORES ===================== */
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+    .border-box, .panel-card, .summary-strip, .status-panel {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background-color: var(--card);
+      overflow: hidden;
+    }
+    .title-sub { color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 12px; }
+    .title-main { text-transform: none; font-size: 20px; }
+
+    /* Leyenda de colores */
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 12px; font-weight: 600; }
+    .chip { padding: 2px 10px; border-radius: 999px; color: #fff; }
+    .chip-giro { background: var(--giro); }
+    .chip-izaje { background: var(--izaje); }
+    .chip-alerta { background: var(--alerta); }
+
+    /* Botones */
+    .btn-ctrl { border-radius: 8px; border: 1px solid var(--line); text-transform: none; font-size: 13px; }
+    .tab-group { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .btn-tab { text-transform: none; font-size: 13px; border-left: 1px solid var(--line); }
+    .active-black { background-color: var(--ok) !important; color: #fff !important; }
+    .active-black:hover { background-color: #166534 !important; color: #fff !important; }
+    .inactive-white { background-color: #fff !important; color: var(--ink) !important; }
+    .inactive-white:hover { background-color: #e2e8f0 !important; color: var(--ink) !important; }
+    .btn-ctrl:hover { background-color: #e2e8f0; color: var(--ink); }
+
+    /* Tira de resumen */
+    .strip-cell { border-right: 1px solid var(--line); text-transform: none; font-size: 13px; }
+    .strip-cell:last-child { background-color: var(--izaje-soft); color: var(--izaje-dark); }
+    .strip-giro { background-color: var(--giro-soft); color: var(--giro-dark); }
+    .strip-izaje { background-color: var(--izaje-soft); color: var(--izaje-dark); }
+    .strip-cell span:last-child { font-family: ui-monospace, Consolas, monospace; }
+
+    /* Panel de estado en lenguaje claro */
+    .status-panel { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .status-text { font-size: 16px; font-weight: 700; }
+    .status-text .g { color: var(--giro); }
+    .status-text .z { color: var(--izaje); }
+    .interlock-alert {
+      background: var(--alerta-soft); color: var(--alerta); border: 1px solid var(--alerta);
+      border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 700;
+    }
+
+    /* Paneles */
+    .panel-header { text-transform: none; letter-spacing: 0; font-size: 14px; background: #1e293b; }
+    .helper-box { text-transform: none; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--line); color: var(--ink); }
+    .info-box { border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #f8fafc; }
+    .banner-switch { text-transform: none; font-size: 13px; background: var(--ok); border: none; border-radius: 8px; }
+    .banner-switch:hover { background: #166534; color: #fff; }
+    canvas, svg { border: 1px solid var(--line); border-radius: 8px; }
+
+    /* Botonera de bits */
+    .bit-card { border: 2px solid var(--line); border-radius: 10px; background: #f8fafc; }
+    .bit-card.grp-giro { border-color: var(--giro); background: var(--giro-soft); }
+    .bit-card.grp-izaje { border-color: var(--izaje); background: var(--izaje-soft); }
+    .bit-card.grp-giro .bit-title, .bit-card.grp-giro .bit-role { color: var(--giro-dark); }
+    .bit-card.grp-izaje .bit-title, .bit-card.grp-izaje .bit-role { color: var(--izaje-dark); }
+    .bit-wire { color: var(--muted); text-transform: none; }
+    .bit-role { text-transform: none; font-size: 11px; }
+    .bit-btn { border: 2px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); }
+    .bit-btn.on { color: #fff; border-color: transparent; }
+    .bit-card.grp-giro .bit-btn.on { background: var(--giro); }
+    .bit-card.grp-izaje .bit-btn.on { background: var(--izaje); }
+    .bit-btn:hover { filter: brightness(0.95); }
+
+    .out-pattern-box { border: 1px solid var(--line); border-radius: 10px; }
+    .out-header { text-transform: none; }
+    .out-cell { border: 2px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); }
+    .out-cell.grp-giro.on { background: var(--giro); color: #fff; border-color: var(--giro); }
+    .out-cell.grp-izaje.on { background: var(--izaje); color: #fff; border-color: var(--izaje); }
+
+    /* Ecuaciones */
+    .eq-list { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .eq-row { border-bottom: 1px solid var(--line); }
+    .eq-row.grp-giro { border-left: 5px solid var(--giro); }
+    .eq-row.grp-izaje { border-left: 5px solid var(--izaje); }
+    .eq-badge { border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
+    .eq-row.grp-giro .eq-badge.on { background: var(--giro); color: #fff; border-color: var(--giro); }
+    .eq-row.grp-izaje .eq-badge.on { background: var(--izaje); color: #fff; border-color: var(--izaje); }
+    .legend-small { font-size: 12px; color: var(--muted); margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -188,17 +278,22 @@
     <!-- ENCABEZADO Y MENÚ DE 2 MODOS -->
     <header class="border-box header-bar">
       <div>
-        <div class="title-sub">ELECTRÓNICA DIGITAL // ENTREGA 1 (100% OFFLINE)</div>
-        <h1 class="title-main">CONTROL DE GRÚA TORRE 2-GDL CON ESP32 (4 BITS + COMPUERTAS)</h1>
+        <div class="title-sub">Electrónica Digital · Entrega 1</div>
+        <h1 class="title-main">Control de grúa torre con ESP32 (4 bits + compuertas)</h1>
+        <div class="legend">
+          <span class="chip chip-giro">Azul = GIRO de la pluma (↔ horizontal)</span>
+          <span class="chip chip-izaje">Naranja = IZAJE del gancho (↕ vertical)</span>
+          <span class="chip chip-alerta">Rojo = INTERLOCK de seguridad</span>
+        </div>
       </div>
 
       <div class="toolbar-right">
         <div class="tab-group" role="tablist">
           <button id="btn-mode-binary" onclick="setMode('BINARY')" class="btn-tab active-black">
-            MODO 1: BINARIO (4 BITS)
+            Modo 1: binario directo
           </button>
           <button id="btn-mode-gates" onclick="setMode('GATES')" class="btn-tab inactive-white">
-            MODO 2: COMPUERTAS LÓGICAS
+            Modo 2: compuertas + interlock
           </button>
         </div>
 
@@ -215,25 +310,31 @@
     <!-- TIRA MÉTRICA COMPACTA -->
     <section class="summary-strip">
       <div class="strip-cell">
-        <span>MODO:</span>
+        <span>Modo:</span>
         <span id="strip-mode">MODO 1 // BINARIO</span>
       </div>
       <div class="strip-cell">
-        <span>ENTRADA:</span>
+        <span>Entrada:</span>
         <span id="strip-input">0000 (DEC 0)</span>
       </div>
       <div class="strip-cell">
-        <span>SALIDA 4-BIT:</span>
+        <span>Salida 4 bits:</span>
         <span id="strip-output">0000 (DEC 0)</span>
       </div>
-      <div class="strip-cell">
-        <span>SERVO 1 (GIRO):</span>
+      <div class="strip-cell strip-giro">
+        <span>Servo 1 · Giro:</span>
         <span id="strip-s1">0° // 500 µS</span>
       </div>
-      <div class="strip-cell">
-        <span>SERVO 2 (IZAJE):</span>
+      <div class="strip-cell strip-izaje">
+        <span>Servo 2 · Izaje:</span>
         <span id="strip-s2">0° // 500 µS</span>
       </div>
+    </section>
+
+    <!-- ESTADO EN LENGUAJE CLARO + ALERTA DE INTERLOCK -->
+    <section class="status-panel">
+      <div class="status-text" id="status-text">Pluma en G0 (0°), gancho abajo (Z0)</div>
+      <div class="interlock-alert" id="interlock-alert" style="display:none"></div>
     </section>
 
     <!-- GRILLA PRINCIPAL: BOTONERA + SIMULACIÓN + CIRCUITO DE COMPUERTAS -->
@@ -243,7 +344,7 @@
       <div class="panel-card">
         <div>
           <div class="panel-header">
-            <span>1. BOTONERA DE 4 PULSADORES</span>
+            <span>1. Botonera de 4 pulsadores</span>
             <span id="badge-input-mode">PALABRA BINARIA 4B</span>
           </div>
 
@@ -254,28 +355,28 @@
 
             <!-- 4 BOTONES INTERACTIVOS -->
             <div class="buttons-4-grid">
-              <div class="bit-card">
+              <div class="bit-card grp-giro">
                 <span class="bit-title" id="lbl-bit3">B3 (2³)</span>
                 <span class="bit-wire">MORADO</span>
                 <button id="btn-bit-3" onclick="toggleBit(3)" class="bit-btn inactive-white">0</button>
                 <span class="bit-role" id="role-bit3">GIRO MSB</span>
               </div>
 
-              <div class="bit-card">
+              <div class="bit-card grp-giro">
                 <span class="bit-title" id="lbl-bit2">B2 (2²)</span>
                 <span class="bit-wire">AZUL</span>
                 <button id="btn-bit-2" onclick="toggleBit(2)" class="bit-btn inactive-white">0</button>
                 <span class="bit-role" id="role-bit2">GIRO LSB</span>
               </div>
 
-              <div class="bit-card">
+              <div class="bit-card grp-izaje">
                 <span class="bit-title" id="lbl-bit1">B1 (2¹)</span>
                 <span class="bit-wire">VERDE</span>
                 <button id="btn-bit-1" onclick="toggleBit(1)" class="bit-btn inactive-white">0</button>
                 <span class="bit-role" id="role-bit1">IZAJE MSB</span>
               </div>
 
-              <div class="bit-card">
+              <div class="bit-card grp-izaje">
                 <span class="bit-title" id="lbl-bit0">B0 (2⁰)</span>
                 <span class="bit-wire">AMARILLO</span>
                 <button id="btn-bit-0" onclick="toggleBit(0)" class="bit-btn inactive-white">0</button>
@@ -286,14 +387,14 @@
             <!-- SALIDA DE 4 BITS QUE VA AL ESP32 -->
             <div class="out-pattern-box">
               <div class="out-header">
-                <span>PATRÓN DE 4 BITS ACTIVO:</span>
+                <span>Salida (lo que recibe la grúa):</span>
                 <span id="out-decimal-label">PATRÓN: 0000 (DEC 0)</span>
               </div>
               <div class="out-4-grid">
-                <div id="out-box-3" class="out-cell">S3 = 0</div>
-                <div id="out-box-2" class="out-cell">S2 = 0</div>
-                <div id="out-box-1" class="out-cell">S1 = 0</div>
-                <div id="out-box-0" class="out-cell">S0 = 0</div>
+                <div id="out-box-3" class="out-cell grp-giro">S3 = 0</div>
+                <div id="out-box-2" class="out-cell grp-giro">S2 = 0</div>
+                <div id="out-box-1" class="out-cell grp-izaje">S1 = 0</div>
+                <div id="out-box-0" class="out-cell grp-izaje">S0 = 0</div>
               </div>
             </div>
           </div>
@@ -313,7 +414,7 @@
       <!-- COLUMNA 2: VISTA MECÁNICA DE LA GRÚA + PWM -->
       <div class="panel-card">
         <div class="panel-header">
-          <span>2. SIMULACIÓN DE LA GRÚA (2 SERVOS)</span>
+          <span>2. La grúa (vista lateral y superior)</span>
           <span id="sim-action-badge">SALIDA: 0000 (DEC 0)</span>
         </div>
         <div class="panel-body">
@@ -324,48 +425,48 @@
       <!-- COLUMNA 3: CIRCUITO DE COMPUERTAS (MODO 2) -->
       <div class="panel-card">
         <div class="panel-header">
-          <span>3. CIRCUITO DE COMPUERTAS (MODO 2)</span>
+          <span>3. Circuito de compuertas (Modo 2)</span>
           <span id="gates-status-badge">74HC04 / 08 / 32</span>
         </div>
         <div class="panel-body">
 
           <!-- AVISO CUANDO ESTÁ EN MODO 1 -->
           <div id="gates-inactive-banner" onclick="setMode('GATES')" class="banner-switch">
-            ESTÁS EN MODO 1 (DIRECTO, SIN INTERLOCK) — CLIC AQUÍ PARA ACTIVAR MODO 2 (COMPUERTAS CON INTERLOCK)
+            Estás en Modo 1 (directo, sin interlock). Clic aquí para activar el Modo 2 (compuertas con interlock).
           </div>
 
           <!-- ECUACIONES BOOLEANAS SIMPLIFICADAS EN TIEMPO REAL -->
           <div class="eq-list">
-            <div class="eq-row">
+            <div class="eq-row grp-giro">
               <span><strong>S3</strong> = E3</span>
               <span id="eq-val-s3" class="eq-badge">S3 = 0</span>
             </div>
-            <div class="eq-row">
+            <div class="eq-row grp-giro">
               <span><strong>S2</strong> = E2</span>
               <span id="eq-val-s2" class="eq-badge">S2 = 0</span>
             </div>
-            <div class="eq-row">
+            <div class="eq-row grp-izaje">
               <span><strong>S1</strong> = E1</span>
               <span id="eq-val-s1" class="eq-badge">S1 = 0</span>
             </div>
-            <div class="eq-row">
-              <span><strong>S0</strong> = E0 + (E3 + E2) · E1'</span>
+            <div class="eq-row grp-izaje">
+              <span><strong>S0</strong> = E0 + (E3 + E2) · E1' <small>(interlock)</small></span>
               <span id="eq-val-s0" class="eq-badge">S0 = 0</span>
             </div>
           </div>
 
           <!-- DIAGRAMA INTERACTIVO DE COMPUERTAS (SVG MONOCROMÁTICO) -->
           <div class="info-box">
-            <div style="font-weight:700; text-transform:uppercase; margin-bottom:4px;">DIAGRAMA DE COMPUERTAS (CLIC EN E3..E0):</div>
+            <div style="font-weight:700; margin-bottom:4px;">Diagrama de compuertas (clic en E3..E0 para cambiar):</div>
             <svg id="gates-svg" viewBox="0 0 380 240"></svg>
           </div>
 
           <div class="info-box">
-            <div style="font-weight:700; text-transform:uppercase; margin-bottom:2px;">COMPORTAMIENTO EN MODO 2:</div>
+            <div style="font-weight:700; margin-bottom:2px;">Cómo funciona el Modo 2:</div>
             <div>
-              • <strong>[E3 E2]:</strong> GIRO SOLICITADO G0..G3 (0°, 45°, 90°, 135°). PASA IGUAL A [S3 S2].<br/>
-              • <strong>[E1 E0]:</strong> ALTURA SOLICITADA Z0..Z3 (Z0 = GANCHO ABAJO, Z3 = ARRIBA).<br/>
-              • <strong>INTERLOCK:</strong> SI LA PLUMA NO ESTÁ EN G0 Y SE PIDE Z0, EL GANCHO SUBE A Z1 (LA CARGA NO PUEDE CHOCAR CON EL PEDESTAL AL GIRAR). EN G0 LA ALTURA PASA TAL CUAL.
+              • <strong style="color:var(--giro)">[E3 E2]</strong>: giro que pides, G0..G3 (0°, 45°, 90°, 135°). Pasa igual a [S3 S2].<br/>
+              • <strong style="color:var(--izaje)">[E1 E0]</strong>: altura que pides, Z0..Z3 (Z0 = gancho abajo, Z3 = arriba).<br/>
+              • <strong style="color:var(--alerta)">Interlock</strong>: si la pluma no está en G0 y pides Z0, el gancho sube a Z1 para que la carga no choque con el pedestal al girar. En G0 la altura pasa tal cual.
             </div>
           </div>
 
@@ -388,6 +489,7 @@
     };
 
     // Servo 1 = GIRO de la pluma (G0..G3), Servo 2 = IZAJE del gancho (Z0..Z3)
+    const COLOR = { giro: '#2563eb', giroSoft: '#dbeafe', izaje: '#ea580c', izajeSoft: '#ffedd5', alerta: '#dc2626', off: '#94a3b8', ink: '#0f172a', ground: '#e2e8f0' };
     const GIRO_MAP  = [0, 45, 90, 135];
     const IZAJE_MAP = [0, 45, 90, 135];
 
@@ -480,22 +582,36 @@
         state.mode === 'BINARY' ? 'MODO 1 // BINARIO 4B' : 'MODO 2 // COMPUERTAS';
       document.getElementById('strip-input').textContent = `${inBin} (DEC ${inDec})`;
       document.getElementById('strip-output').textContent = `${outBin} (DEC ${outDec})`;
-      document.getElementById('strip-s1').textContent = `${state.servo1Angle}° // ${pwm1} µS`;
-      document.getElementById('strip-s2').textContent = `${state.servo2Angle}° // ${pwm2} µS`;
+      const gIdx = (s3 << 1) | s2;
+      const zIdx = (s1 << 1) | s0;
+      const ZDESC = ['gancho abajo', 'gancho a 1/3', 'gancho a 2/3', 'gancho arriba'];
+      document.getElementById('strip-s1').textContent = `G${gIdx} = ${state.servo1Angle}° // ${pwm1} µs`;
+      document.getElementById('strip-s2').textContent = `Z${zIdx} = ${state.servo2Angle}° // ${pwm2} µs`;
+
+      // El interlock actúa cuando la pluma está fuera de G0 y se pidió Z0 (E1 = E0 = 0)
+      const interlock = state.mode === 'GATES' && gateInfo.and0 === 1 && e0 === 0;
+      document.getElementById('status-text').innerHTML =
+        `<span class="g">Pluma en G${gIdx} (${state.servo1Angle}°)</span> · ` +
+        `<span class="z">${ZDESC[zIdx]} (Z${zIdx})</span>`;
+      const alertBox = document.getElementById('interlock-alert');
+      alertBox.style.display = interlock ? 'block' : 'none';
+      alertBox.textContent = interlock
+        ? `⚠ INTERLOCK: la pluma está fuera de G0 y pediste Z0. El gancho sube a Z1 para que la carga no choque con el pedestal.`
+        : '';
 
       for (let i = 0; i < 4; i++) {
         const btn = document.getElementById(`btn-bit-${i}`);
         const val = state.inputs[i];
         btn.textContent = val;
-        btn.className = val === 1 ? 'bit-btn active-black' : 'bit-btn inactive-white';
+        btn.className = val === 1 ? 'bit-btn on' : 'bit-btn';
 
         const outBox = document.getElementById(`out-box-${i}`);
         const outVal = state.outputs[i];
         outBox.textContent = `S${i} = ${outVal}`;
-        outBox.className = outVal === 1 ? 'out-cell active-black' : 'out-cell inactive-white';
+        outBox.className = 'out-cell ' + (i >= 2 ? 'grp-giro' : 'grp-izaje') + (outVal === 1 ? ' on' : '');
       }
 
-      document.getElementById('out-decimal-label').textContent = `PATRÓN: ${outBin} (DEC ${outDec})`;
+      document.getElementById('out-decimal-label').textContent = `${outBin} (DEC ${outDec})`;
 
       const gateOuts = [
         { id: 's3', val: gateInfo.s3 },
@@ -506,7 +622,7 @@
       gateOuts.forEach(item => {
         const badge = document.getElementById(`eq-val-${item.id}`);
         badge.textContent = `${item.id.toUpperCase()} = ${item.val}`;
-        badge.className = item.val === 1 ? 'eq-badge active-black' : 'eq-badge inactive-white';
+        badge.className = item.val === 1 ? 'eq-badge on' : 'eq-badge';
       });
 
       const banner = document.getElementById('gates-inactive-banner');
@@ -514,10 +630,10 @@
 
       if (state.mode === 'GATES') {
         banner.style.display = 'none';
-        statusBadge.textContent = 'ACTIVO // 74HC04/08/32';
-        document.getElementById('badge-input-mode').textContent = 'ENTRADAS COMPUERTAS';
+        statusBadge.textContent = 'ACTIVO';
+        document.getElementById('badge-input-mode').textContent = 'Entradas (Modo 2)';
         document.getElementById('mode-helper-text').textContent =
-          'MODO 2 (COMPUERTAS): [E3 E2] = GIRO SOLICITADO, [E1 E0] = ALTURA SOLICITADA. LAS COMPUERTAS AND/OR/NOT APLICAN EL INTERLOCK (PLUMA FUERA DE G0 => GANCHO MÍNIMO Z1).';
+          'Modo 2 (compuertas): [E3 E2] = giro que pides, [E1 E0] = altura que pides. Las compuertas AND/OR/NOT aplican el interlock: si la pluma no está en G0, el gancho sube como mínimo a Z1.';
         document.getElementById('lbl-bit3').textContent = 'E3';
         document.getElementById('lbl-bit2').textContent = 'E2';
         document.getElementById('lbl-bit1').textContent = 'E1';
@@ -528,10 +644,10 @@
         document.getElementById('role-bit0').textContent = 'ALTURA LSB';
       } else {
         banner.style.display = 'block';
-        statusBadge.textContent = 'EN ESPERA (MODO 1)';
-        document.getElementById('badge-input-mode').textContent = 'PALABRA BINARIA 4B';
+        statusBadge.textContent = 'En espera (Modo 1)';
+        document.getElementById('badge-input-mode').textContent = 'Palabra binaria';
         document.getElementById('mode-helper-text').textContent =
-          'MODO 1 (BINARIO): [B3 B2] = GIRO DE LA PLUMA (SERVO 1) Y [B1 B0] = IZAJE DEL GANCHO (SERVO 2). SALIDA = ENTRADA.';
+          'Modo 1 (binario): [B3 B2] = giro de la pluma (servo 1) y [B1 B0] = izaje del gancho (servo 2). La salida es igual a la entrada.';
         document.getElementById('lbl-bit3').textContent = 'B3 (2³)';
         document.getElementById('lbl-bit2').textContent = 'B2 (2²)';
         document.getElementById('lbl-bit1').textContent = 'B1 (2¹)';
@@ -542,57 +658,61 @@
         document.getElementById('role-bit0').textContent = 'IZAJE LSB';
       }
 
-      document.getElementById('sim-action-badge').textContent = `SALIDA: ${outBin} (DEC ${outDec})`;
+      document.getElementById('sim-action-badge').textContent = `Salida: ${outBin}`;
 
       renderGatesSVG(e3, e2, e1, e0, gateInfo);
-      renderCraneCanvas(state.servo1Angle, state.servo2Angle, pwm1, pwm2);
+      renderCraneCanvas(state.servo1Angle, state.servo2Angle, pwm1, pwm2, interlock);
     }
 
     function renderGatesSVG(e3, e2, e1, e0, g) {
       const svg = document.getElementById('gates-svg');
       const w = (bit) => bit ? 'stroke-width="2.5"' : 'stroke-width="1" stroke-dasharray="3,2"';
-      const box = (x, y, wBox, label, active) => `
-        <rect x="${x}" y="${y}" width="${wBox}" height="26" fill="${active ? '#000000' : '#ffffff'}" stroke="#000000" stroke-width="1.5"/>
-        <text x="${x + wBox / 2}" y="${y + 16}" text-anchor="middle" font-size="9" font-weight="bold" fill="${active ? '#ffffff' : '#000000'}">${label}</text>
+      // Color por grupo: azul = giro, naranja = izaje, rojo = rama del interlock
+      const G = COLOR.giro, Z = COLOR.izaje, A = COLOR.alerta;
+      const fillOf = (active, c) => active ? c : '#f1f5f9';
+      const box = (x, y, wBox, label, active, c) => `
+        <rect x="${x}" y="${y}" width="${wBox}" height="26" rx="5" fill="${fillOf(active, c)}" stroke="${active ? c : COLOR.off}" stroke-width="1.5"/>
+        <text x="${x + wBox / 2}" y="${y + 16}" text-anchor="middle" font-size="9" font-weight="bold" fill="${active ? '#ffffff' : '#475569'}">${label}</text>
       `;
-      const pin = (x, y, text, active, bitIndex = null) => `
+      const pin = (x, y, text, active, c, bitIndex = null) => `
         <g ${bitIndex !== null ? `onclick="toggleBit(${bitIndex}, true)" style="cursor:pointer"` : ''}>
-          <rect x="${x}" y="${y}" width="42" height="26" fill="${active ? '#000000' : '#ffffff'}" stroke="#000000" stroke-width="1.5"/>
-          <text x="${x + 21}" y="${y + 16}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${active ? '#ffffff' : '#000000'}">${text}</text>
+          <rect x="${x}" y="${y}" width="42" height="26" rx="5" fill="${fillOf(active, c)}" stroke="${active ? c : COLOR.off}" stroke-width="1.5"/>
+          <text x="${x + 21}" y="${y + 16}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${active ? '#ffffff' : '#475569'}">${text}</text>
         </g>
       `;
 
-      const line = (pts, bit) =>
-        `<polyline points="${pts}" fill="none" stroke="#000000" ${w(bit)} />`;
-      const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="2.5" fill="#000000" />`;
+      const line = (pts, bit, c) =>
+        `<polyline points="${pts}" fill="none" stroke="${bit ? c : COLOR.off}" ${w(bit)} />`;
+      const dot = (x, y, c) => `<circle cx="${x}" cy="${y}" r="2.5" fill="${c}" />`;
 
       let content = '';
 
       // S3 = E3, S2 = E2, S1 = E1 (cables directos)
-      content += pin(8, 8, 'E3=' + e3, e3, 3)  + line('50,21 330,21', e3) + pin(330, 8, 'S3=' + g.s3, g.s3, null);
-      content += pin(8, 44, 'E2=' + e2, e2, 2) + line('50,57 330,57', e2) + pin(330, 44, 'S2=' + g.s2, g.s2, null);
-      content += pin(8, 80, 'E1=' + e1, e1, 1) + line('50,93 330,93', e1) + pin(330, 80, 'S1=' + g.s1, g.s1, null);
+      content += pin(8, 8, 'E3=' + e3, e3, G, 3)  + line('50,21 330,21', e3, G) + pin(330, 8, 'S3=' + g.s3, g.s3, G, null);
+      content += pin(8, 44, 'E2=' + e2, e2, G, 2) + line('50,57 330,57', e2, G) + pin(330, 44, 'S2=' + g.s2, g.s2, G, null);
+      content += pin(8, 80, 'E1=' + e1, e1, Z, 1) + line('50,93 330,93', e1, Z) + pin(330, 80, 'S1=' + g.s1, g.s1, Z, null);
 
-      // Derivaciones hacia la red de S0
-      content += line('62,21 62,147 88,147', e3) + dot(62, 21);
-      content += line('72,57 72,159 88,159', e2) + dot(72, 57);
-      content += line('80,93 80,189 88,189', e1) + dot(80, 93);
+      // Derivaciones hacia la red de S0 (rama del interlock en rojo cuando está activa)
+      content += line('62,21 62,147 88,147', e3, G) + dot(62, 21, e3 ? G : COLOR.off);
+      content += line('72,57 72,159 88,159', e2, G) + dot(72, 57, e2 ? G : COLOR.off);
+      content += line('80,93 80,189 88,189', e1, Z) + dot(80, 93, e1 ? Z : COLOR.off);
 
       // S0 = E0 + (E3 + E2) · E1'
-      content += box(88, 140, 76, 'OR(E3+E2)=' + g.outOfHome, g.outOfHome);
-      content += box(88, 176, 76, "NOT(E1)=" + g.notE1, g.notE1);
-      content += line('164,153 171,153 171,165 178,165', g.outOfHome);
-      content += line('164,189 171,189 171,177 178,177', g.notE1);
-      content += box(178, 158, 80, "AND(F·E1')=" + g.and0, g.and0);
-      content += line('258,171 268,171', g.and0);
-      content += box(268, 158, 52, 'OR=' + g.s0, g.s0);
-      content += pin(8, 210, 'E0=' + e0, e0, 0) + line('50,223 294,223 294,184', e0);
-      content += line('320,171 330,171', g.s0) + pin(330, 158, 'S0=' + g.s0, g.s0, null);
+      const K = '#475569'; // compuertas intermedias en gris; solo el AND se pone rojo (interlock)
+      content += box(88, 140, 76, 'OR(E3+E2)=' + g.outOfHome, g.outOfHome, K);
+      content += box(88, 176, 76, "NOT(E1)=" + g.notE1, g.notE1, K);
+      content += line('164,153 171,153 171,165 178,165', g.outOfHome, K);
+      content += line('164,189 171,189 171,177 178,177', g.notE1, K);
+      content += box(178, 158, 80, "AND(F·E1')=" + g.and0, g.and0, A);
+      content += line('258,171 268,171', g.and0, A);
+      content += box(268, 158, 52, 'OR=' + g.s0, g.s0, Z);
+      content += pin(8, 210, 'E0=' + e0, e0, Z, 0) + line('50,223 294,223 294,184', e0, Z);
+      content += line('320,171 330,171', g.s0, Z) + pin(330, 158, 'S0=' + g.s0, g.s0, Z, null);
 
       svg.innerHTML = content;
     }
 
-    function renderCraneCanvas(s1Angle, s2Angle, pwm1, pwm2) {
+    function renderCraneCanvas(s1Angle, s2Angle, pwm1, pwm2, interlock) {
       const canvas = document.getElementById('craneCanvas');
       const ctx = canvas.getContext('2d');
       const W = canvas.width;
@@ -601,30 +721,33 @@
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
 
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = '#e2e8f0';
       for (let x = 20; x < W; x += 20) {
         for (let y = 20; y < 235; y += 20) {
           ctx.fillRect(x, y, 1, 1);
         }
       }
 
-      ctx.strokeStyle = '#000000';
+      // Suelo
+      ctx.fillStyle = COLOR.ground;
+      ctx.fillRect(0, 225, 290, 15);
+      ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(15, 225);
-      ctx.lineTo(W - 15, 225);
+      ctx.moveTo(0, 225);
+      ctx.lineTo(290, 225);
       ctx.stroke();
 
       const gIdx = GIRO_MAP.indexOf(s1Angle);
       const zIdx = IZAJE_MAP.indexOf(s2Angle);
 
-      // Dibuja una barra con contorno negro y relleno blanco (estilo monocromático)
-      const bar = (x1, y1, x2, y2, outer, inner) => {
+      // Barra con contorno de color y relleno claro
+      const bar = (x1, y1, x2, y2, outer, inner, color, soft) => {
         ctx.lineCap = 'butt';
-        ctx.strokeStyle = '#000000';
+        ctx.strokeStyle = color;
         ctx.lineWidth = outer;
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = soft;
         ctx.lineWidth = inner;
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
       };
@@ -636,19 +759,19 @@
       const groundY = 225;
 
       // Pedestal (caja) + mástil
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = '#475569';
       ctx.fillRect(mastX - 32, 203, 64, groundY - 203);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 9px monospace';
       ctx.fillText('PEDESTAL', mastX - 28, 218);
-      bar(mastX, 203, mastX, 58, 10, 4);
+      bar(mastX, 203, mastX, 58, 10, 4, '#475569', '#e2e8f0');
 
-      // Pluma horizontal
-      bar(22, jibY, 250, jibY, 10, 4);
+      // Pluma horizontal (azul: la mueve el servo de giro)
+      bar(22, jibY, 250, jibY, 10, 4, COLOR.giro, COLOR.giroSoft);
 
       // Engranaje en lo alto del mástil (gira la pluma)
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#000000';
+      ctx.fillStyle = COLOR.giroSoft;
+      ctx.strokeStyle = COLOR.giro;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(mastX, jibY, 11, 0, Math.PI * 2);
@@ -662,12 +785,12 @@
         ctx.lineTo(mastX + Math.cos(a) * 15, jibY + Math.sin(a) * 15);
         ctx.stroke();
       }
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = COLOR.giro;
       ctx.font = 'bold 8px monospace';
       ctx.fillText('S1', mastX - 5, jibY + 3);
 
       // Caja en el extremo contrario: servo del carrete (S2) y contrapeso
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = COLOR.izaje;
       ctx.fillRect(12, jibY + 6, 44, 26);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 9px monospace';
@@ -676,27 +799,27 @@
       ctx.fillText('CARRETE', 15, jibY + 27);
 
       // Polea en el otro extremo de la pluma
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#000000';
+      ctx.fillStyle = COLOR.izajeSoft;
+      ctx.strokeStyle = COLOR.izaje;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(tipX, jibY + 11, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      // Escala de niveles Z0..Z3 y posición del gancho
+      // Escala de niveles Z0..Z3 (el nivel actual se resalta) y posición del gancho
       const hookY = 190 - zIdx * 33;
       ctx.font = 'bold 8px monospace';
       for (let i = 0; i < 4; i++) {
         const ty = 190 - i * 33;
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(264, ty, 8, 1);
-        ctx.fillText(`Z${i}`, 274, ty + 3);
+        const on = i === zIdx;
+        ctx.fillStyle = on ? COLOR.izaje : COLOR.off;
+        ctx.fillRect(264, ty, 8, on ? 3 : 1);
+        ctx.fillText(`Z${i}${on ? ' ◄' : ''}`, 274, ty + 3);
       }
-      ctx.fillRect(262, hookY - 1, 12, 3);
 
-      // Cable, gancho y carga
-      ctx.strokeStyle = '#000000';
+      // Cable, gancho y carga (naranja: los mueve el servo de izaje)
+      ctx.strokeStyle = COLOR.izaje;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(tipX, jibY + 17);
@@ -708,17 +831,23 @@
       ctx.arc(tipX, hookY + 6, 6, Math.PI * 1.1, Math.PI * 2.6);
       ctx.stroke();
 
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = interlock ? COLOR.alerta : COLOR.izaje;
       ctx.fillRect(tipX - 11, hookY + 13, 22, 22);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 8px monospace';
-      ctx.fillText('OBJ', tipX - 9, hookY + 27);
+      ctx.fillText('CARGA', tipX - 11, hookY + 27);
+      if (interlock) {
+        ctx.fillStyle = COLOR.alerta;
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText('INTERLOCK', 150, 150);
+        ctx.fillText('sube a Z1', 150, 162);
+      }
 
       // ---------- VISTA SUPERIOR (la pluma gira según G, 0°..135°) ----------
       const cx = 362;
       const cy = 150;
       const R = 58;
-      ctx.strokeStyle = '#000000';
+      ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(292, 40);
@@ -731,12 +860,23 @@
       ctx.arc(cx, cy, R, -(135 * Math.PI) / 180, 0);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      // Tramo ya recorrido (azul sólido) hasta la posición actual
+      ctx.strokeStyle = COLOR.giro;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, -(s1Angle * Math.PI) / 180, 0);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
       ctx.font = 'bold 8px monospace';
-      ctx.fillStyle = '#000000';
       GIRO_MAP.forEach((deg, i) => {
         const a = (deg * Math.PI) / 180;
         const mx = cx + Math.cos(a) * (R + 4);
         const my = cy - Math.sin(a) * (R + 4);
+        const on = i === gIdx;
+        ctx.strokeStyle = on ? COLOR.giro : COLOR.off;
+        ctx.fillStyle = on ? COLOR.giro : '#64748b';
         ctx.beginPath();
         ctx.moveTo(cx + Math.cos(a) * (R - 4), cy - Math.sin(a) * (R - 4));
         ctx.lineTo(mx, my);
@@ -749,51 +889,55 @@
       const jibTipY = cy - Math.sin(ang) * R;
       const jibBackX = cx - Math.cos(ang) * 24;
       const jibBackY = cy + Math.sin(ang) * 24;
-      bar(jibBackX, jibBackY, jibTipX, jibTipY, 8, 3);
+      bar(jibBackX, jibBackY, jibTipX, jibTipY, 8, 3, COLOR.giro, COLOR.giroSoft);
 
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = COLOR.izaje;
       ctx.fillRect(jibBackX - 5, jibBackY - 5, 10, 10);
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#000000';
+      ctx.fillStyle = interlock ? COLOR.alerta : COLOR.izajeSoft;
+      ctx.strokeStyle = interlock ? COLOR.alerta : COLOR.izaje;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(jibTipX, jibTipY, 5, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#475569';
       ctx.beginPath();
       ctx.arc(cx, cy, 7, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
       // ---------- Textos ----------
-      ctx.fillStyle = '#000000';
       ctx.font = 'bold 11px monospace';
-      ctx.fillText(`SERVO 1 (GIRO): ${s1Angle}° [G${gIdx}]`, 14, 18);
-      ctx.fillText(`SERVO 2 (IZAJE): ${s2Angle}° [Z${zIdx}${zIdx === 0 ? ' ABAJO' : zIdx === 3 ? ' ARRIBA' : ''}]`, 14, 34);
+      ctx.fillStyle = COLOR.giro;
+      ctx.fillText(`GIRO:  G${gIdx} = ${s1Angle}°`, 14, 18);
+      ctx.fillStyle = COLOR.izaje;
+      ctx.fillText(`IZAJE: Z${zIdx} = ${s2Angle}° ${zIdx === 0 ? '(abajo)' : zIdx === 3 ? '(arriba)' : ''}`, 14, 34);
       ctx.font = 'bold 9px monospace';
+      ctx.fillStyle = '#64748b';
       ctx.fillText('VISTA LATERAL', 150, 236);
       ctx.fillText('VISTA SUPERIOR', 300, 236);
 
-      ctx.strokeStyle = '#000000';
+      ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(0, 240);
       ctx.lineTo(W, 240);
       ctx.stroke();
 
-      drawPwmWave(ctx, 14, 255, W - 28, 30, 'PWM SERVO 1 (GIRO)', pwm1);
-      drawPwmWave(ctx, 14, 298, W - 28, 30, 'PWM SERVO 2 (IZAJE)', pwm2);
+      drawPwmWave(ctx, 14, 255, W - 28, 30, 'PWM servo 1 (giro)', pwm1, COLOR.giro);
+      drawPwmWave(ctx, 14, 298, W - 28, 30, 'PWM servo 2 (izaje)', pwm2, COLOR.izaje);
     }
 
-    function drawPwmWave(ctx, x, y, width, height, label, pulseUs) {
+    function drawPwmWave(ctx, x, y, width, height, label, pulseUs, color) {
       const dutyRatio = Math.min(0.85, Math.max(0.1, pulseUs / 3000));
       const periodPx = Math.floor(width / 3);
 
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = color;
       ctx.font = 'bold 10px monospace';
-      ctx.fillText(`${label}: ${pulseUs} µS (${(pulseUs / 200).toFixed(1)}% @ 50HZ)`, x, y - 3);
+      ctx.fillText(`${label}: ${pulseUs} µs (${(pulseUs / 200).toFixed(1)}% @ 50 Hz)`, x, y - 3);
 
-      ctx.strokeStyle = '#000000';
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.beginPath();
 
