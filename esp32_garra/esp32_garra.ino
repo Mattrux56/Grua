@@ -11,19 +11,19 @@ const int PIN_B0 = 16; // Bit 0 (LSB) - Amarillo
 const int PIN_SWITCH_MODO = 4;
 
 // Pines PWM del ESP32 para los 2 servomotores SG90 (50 Hz)
-const int PIN_SERVO_PINZA = 25; // Servo 1: Pinza (0° = Soltar, 90° = Agarrar)
-const int PIN_SERVO_BRAZO = 26; // Servo 2: Brazo (0° = Abajo, 135° = Arriba)
+const int PIN_SERVO_GIRO  = 25; // Servo 1: GIRO de la pluma (G0..G3 = 0°, 45°, 90°, 135°)
+const int PIN_SERVO_IZAJE = 26; // Servo 2: IZAJE del gancho (Z0 = abajo ... Z3 = arriba)
 
-const int MAPA_PINZA[4] = {0, 30, 60, 90};
-const int MAPA_BRAZO[4] = {0, 45, 90, 135};
+const int MAPA_GIRO[4]  = {0, 45, 90, 135};
+const int MAPA_IZAJE[4] = {0, 45, 90, 135};
 
 int modoOperacion = 1; // 1 = BINARIO, 2 = COMPUERTAS
 int bitsEntrada[4] = {0, 0, 0, 0}; // [b0, b1, b2, b3]
 int prevLecturaBtn[4] = {0, 0, 0, 0};
 int ultimoSwitch = -1;
 
-int anguloPinzaActual = 0;
-int anguloBrazoActual = 0;
+int anguloGiroActual = 0;
+int anguloIzajeActual = 0;
 
 // Cliente Wi-Fi + MQTT ligero (sin librerías externas) para sincronizar con index.html
 WiFiClient netClient;
@@ -40,21 +40,24 @@ uint32_t anguloADuty16Bits(int angulo) {
   return (pulsoUs * 65535) / 20000;
 }
 
-void moverServos(int anguloPinza, int anguloBrazo) {
-  anguloPinzaActual = constrain(anguloPinza, 0, 90);
-  anguloBrazoActual = constrain(anguloBrazo, 0, 135);
-  ledcWrite(PIN_SERVO_PINZA, anguloADuty16Bits(anguloPinzaActual));
-  ledcWrite(PIN_SERVO_BRAZO, anguloADuty16Bits(anguloBrazoActual));
+void moverServos(int anguloGiro, int anguloIzaje) {
+  anguloGiroActual  = constrain(anguloGiro, 0, 135);
+  anguloIzajeActual = constrain(anguloIzaje, 0, 135);
+  ledcWrite(PIN_SERVO_GIRO, anguloADuty16Bits(anguloGiroActual));
+  ledcWrite(PIN_SERVO_IZAJE, anguloADuty16Bits(anguloIzajeActual));
 }
 
+// Red combinacional AND/OR/NOT con interlock de seguridad.
+// E3 E2 = giro solicitado, E1 E0 = altura solicitada. S3 S2 = giro, S1 S0 = izaje.
+// Si la pluma NO esta en G0 (E3+E2 = 1) el gancho no puede estar en Z0 -> sube a Z1.
 void evaluarCompuertas(int e3, int e2, int e1, int e0, int &s3, int &s2, int &s1, int &s0) {
-  int notE1 = !e1;
-  int notE3 = !e3;
+  int fueraDeHome = e3 | e2;   // OR:  pluma fuera de G0
+  int notE1 = !e1;             // NOT
 
-  s3 = e3 | (e2 & e1);    // S3 = E3 + (E2 · E1)
-  s2 = e2 | (e3 & notE1); // S2 = E2 + (E3 · E1')
-  s1 = e1 | (e3 & e0);    // S1 = E1 + (E3 · E0)
-  s0 = e0 | (e2 & notE3); // S0 = E0 + (E2 · E3')
+  s3 = e3;                              // S3 = E3
+  s2 = e2;                              // S2 = E2
+  s1 = e1;                              // S1 = E1
+  s0 = e0 | (fueraDeHome & notE1);      // S0 = E0 + (E3 + E2) · E1'
 }
 
 // Publica el estado actual hacia index.html
@@ -85,17 +88,17 @@ void actualizarSistema(bool notificarWeb = true) {
     evaluarCompuertas(e3, e2, e1, e0, s3, s2, s1, s0);
   }
 
-  int idxPinza = (s3 << 1) | s2;
-  int idxBrazo = (s1 << 1) | s0;
+  int idxGiro  = (s3 << 1) | s2;
+  int idxIzaje = (s1 << 1) | s0;
 
-  moverServos(MAPA_PINZA[idxPinza], MAPA_BRAZO[idxBrazo]);
+  moverServos(MAPA_GIRO[idxGiro], MAPA_IZAJE[idxIzaje]);
 
-  Serial.printf("MODO %d (%s) | ENTRADA: %d%d%d%d | SALIDA 4-BIT: %d%d%d%d | SERVO1(PINZA): %d deg | SERVO2(BRAZO): %d deg\n",
+  Serial.printf("MODO %d (%s) | ENTRADA: %d%d%d%d | SALIDA 4-BIT: %d%d%d%d | SERVO1(GIRO): %d deg | SERVO2(IZAJE): %d deg\n",
                 modoOperacion,
                 modoOperacion == 1 ? "BINARIO" : "COMPUERTAS",
                 e3, e2, e1, e0,
                 s3, s2, s1, s0,
-                anguloPinzaActual, anguloBrazoActual);
+                anguloGiroActual, anguloIzajeActual);
 
   if (notificarWeb) {
     mqttPublishState();
@@ -221,8 +224,8 @@ void setup() {
   pinMode(PIN_B0, INPUT_PULLDOWN);
   pinMode(PIN_SWITCH_MODO, INPUT_PULLDOWN);
 
-  ledcAttach(PIN_SERVO_PINZA, 50, 16);
-  ledcAttach(PIN_SERVO_BRAZO, 50, 16);
+  ledcAttach(PIN_SERVO_GIRO, 50, 16);
+  ledcAttach(PIN_SERVO_IZAJE, 50, 16);
 
   Serial.println("Conectando Wi-Fi virtual de Wokwi (Wokwi-GUEST)...");
   WiFi.begin("Wokwi-GUEST", "", 6);

@@ -16,17 +16,17 @@
     },
     {
       "type": "wokwi-servo",
-      "id": "servo_pinza",
+      "id": "servo_giro",
       "top": -20,
       "left": -155,
-      "attrs": { "hornColor": "white", "label": "SERVO 1 (PINZA)" }
+      "attrs": { "hornColor": "white", "label": "SERVO 1 (GIRO)" }
     },
     {
       "type": "wokwi-servo",
-      "id": "servo_brazo",
+      "id": "servo_izaje",
       "top": 110,
       "left": -155,
-      "attrs": { "hornColor": "white", "label": "SERVO 2 (BRAZO)" }
+      "attrs": { "hornColor": "white", "label": "SERVO 2 (IZAJE)" }
     },
     {
       "type": "wokwi-slide-switch",
@@ -68,13 +68,13 @@
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
     [ "esp:RX", "$serialMonitor:TX", "", [] ],
 
-    [ "servo_pinza:PWM", "esp:25", "orange", [ "h0" ] ],
-    [ "servo_pinza:V+", "esp:5V", "red", [ "h0" ] ],
-    [ "servo_pinza:GND", "esp:GND.1", "black", [ "h0" ] ],
+    [ "servo_giro:PWM", "esp:25", "orange", [ "h0" ] ],
+    [ "servo_giro:V+", "esp:5V", "red", [ "h0" ] ],
+    [ "servo_giro:GND", "esp:GND.1", "black", [ "h0" ] ],
 
-    [ "servo_brazo:PWM", "esp:26", "orange", [ "h0" ] ],
-    [ "servo_brazo:V+", "esp:5V", "red", [ "h0" ] ],
-    [ "servo_brazo:GND", "esp:GND.1", "black", [ "h0" ] ],
+    [ "servo_izaje:PWM", "esp:26", "orange", [ "h0" ] ],
+    [ "servo_izaje:V+", "esp:5V", "red", [ "h0" ] ],
+    [ "servo_izaje:GND", "esp:GND.1", "black", [ "h0" ] ],
 
     [ "sw_modo:1", "esp:GND.2", "black", [ "v0" ] ],
     [ "sw_modo:2", "esp:4", "white", [ "v0" ] ],

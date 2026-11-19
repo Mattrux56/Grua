@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CONTROL GARRA 2-GDL // ESP32 + 4 BITS</title>
+  <title>CONTROL GRÚA TORRE 2-GDL // ESP32 + 4 BITS</title>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -189,7 +189,7 @@
     <header class="border-box header-bar">
       <div>
         <div class="title-sub">ELECTRÓNICA DIGITAL // ENTREGA 1 (100% OFFLINE)</div>
-        <h1 class="title-main">CONTROL DE GARRA 2-GDL CON ESP32 (4 BITS + COMPUERTAS)</h1>
+        <h1 class="title-main">CONTROL DE GRÚA TORRE 2-GDL CON ESP32 (4 BITS + COMPUERTAS)</h1>
       </div>
 
       <div class="toolbar-right">
@@ -227,11 +227,11 @@
         <span id="strip-output">0000 (DEC 0)</span>
       </div>
       <div class="strip-cell">
-        <span>SERVO 1 (PINZA):</span>
+        <span>SERVO 1 (GIRO):</span>
         <span id="strip-s1">0° // 500 µS</span>
       </div>
       <div class="strip-cell">
-        <span>SERVO 2 (BRAZO):</span>
+        <span>SERVO 2 (IZAJE):</span>
         <span id="strip-s2">0° // 500 µS</span>
       </div>
     </section>
@@ -249,7 +249,7 @@
 
           <div class="panel-body">
             <div class="helper-box" id="mode-helper-text">
-              MODO 1 (BINARIO): [B3 B2] CONTROLAN SERVO 1 (PINZA AGARRAR/SOLTAR) Y [B1 B0] CONTROLAN SERVO 2 (BRAZO SUBIR/BAJAR).
+              MODO 1 (BINARIO): [B3 B2] = GIRO DE LA PLUMA (SERVO 1) Y [B1 B0] = IZAJE DEL GANCHO (SERVO 2).
             </div>
 
             <!-- 4 BOTONES INTERACTIVOS -->
@@ -258,28 +258,28 @@
                 <span class="bit-title" id="lbl-bit3">B3 (2³)</span>
                 <span class="bit-wire">MORADO</span>
                 <button id="btn-bit-3" onclick="toggleBit(3)" class="bit-btn inactive-white">0</button>
-                <span class="bit-role" id="role-bit3">PINZA MSB</span>
+                <span class="bit-role" id="role-bit3">GIRO MSB</span>
               </div>
 
               <div class="bit-card">
                 <span class="bit-title" id="lbl-bit2">B2 (2²)</span>
                 <span class="bit-wire">AZUL</span>
                 <button id="btn-bit-2" onclick="toggleBit(2)" class="bit-btn inactive-white">0</button>
-                <span class="bit-role" id="role-bit2">PINZA LSB</span>
+                <span class="bit-role" id="role-bit2">GIRO LSB</span>
               </div>
 
               <div class="bit-card">
                 <span class="bit-title" id="lbl-bit1">B1 (2¹)</span>
                 <span class="bit-wire">VERDE</span>
                 <button id="btn-bit-1" onclick="toggleBit(1)" class="bit-btn inactive-white">0</button>
-                <span class="bit-role" id="role-bit1">BRAZO MSB</span>
+                <span class="bit-role" id="role-bit1">IZAJE MSB</span>
               </div>
 
               <div class="bit-card">
                 <span class="bit-title" id="lbl-bit0">B0 (2⁰)</span>
                 <span class="bit-wire">AMARILLO</span>
                 <button id="btn-bit-0" onclick="toggleBit(0)" class="bit-btn inactive-white">0</button>
-                <span class="bit-role" id="role-bit0">BRAZO LSB</span>
+                <span class="bit-role" id="role-bit0">IZAJE LSB</span>
               </div>
             </div>
 
@@ -310,14 +310,14 @@
         </div>
       </div>
 
-      <!-- COLUMNA 2: VISTA MECÁNICA DE LA GARRA + PWM -->
+      <!-- COLUMNA 2: VISTA MECÁNICA DE LA GRÚA + PWM -->
       <div class="panel-card">
         <div class="panel-header">
-          <span>2. SIMULACIÓN DE LA GARRA (2 SERVOS)</span>
+          <span>2. SIMULACIÓN DE LA GRÚA (2 SERVOS)</span>
           <span id="sim-action-badge">SALIDA: 0000 (DEC 0)</span>
         </div>
         <div class="panel-body">
-          <canvas id="clawCanvas" width="440" height="340"></canvas>
+          <canvas id="craneCanvas" width="440" height="340"></canvas>
         </div>
       </div>
 
@@ -331,25 +331,25 @@
 
           <!-- AVISO CUANDO ESTÁ EN MODO 1 -->
           <div id="gates-inactive-banner" onclick="setMode('GATES')" class="banner-switch">
-            ESTÁS EN MODO 1 (DIRECTO) — CLIC AQUÍ PARA ACTIVAR MODO 2 (COMPUERTAS)
+            ESTÁS EN MODO 1 (DIRECTO, SIN INTERLOCK) — CLIC AQUÍ PARA ACTIVAR MODO 2 (COMPUERTAS CON INTERLOCK)
           </div>
 
           <!-- ECUACIONES BOOLEANAS SIMPLIFICADAS EN TIEMPO REAL -->
           <div class="eq-list">
             <div class="eq-row">
-              <span><strong>S3</strong> = E3 + (E2 · E1)</span>
+              <span><strong>S3</strong> = E3</span>
               <span id="eq-val-s3" class="eq-badge">S3 = 0</span>
             </div>
             <div class="eq-row">
-              <span><strong>S2</strong> = E2 + (E3 · E1')</span>
+              <span><strong>S2</strong> = E2</span>
               <span id="eq-val-s2" class="eq-badge">S2 = 0</span>
             </div>
             <div class="eq-row">
-              <span><strong>S1</strong> = E1 + (E3 · E0)</span>
+              <span><strong>S1</strong> = E1</span>
               <span id="eq-val-s1" class="eq-badge">S1 = 0</span>
             </div>
             <div class="eq-row">
-              <span><strong>S0</strong> = E0 + (E2 · E3')</span>
+              <span><strong>S0</strong> = E0 + (E3 + E2) · E1'</span>
               <span id="eq-val-s0" class="eq-badge">S0 = 0</span>
             </div>
           </div>
@@ -357,16 +357,15 @@
           <!-- DIAGRAMA INTERACTIVO DE COMPUERTAS (SVG MONOCROMÁTICO) -->
           <div class="info-box">
             <div style="font-weight:700; text-transform:uppercase; margin-bottom:4px;">DIAGRAMA DE COMPUERTAS (CLIC EN E3..E0):</div>
-            <svg id="gates-svg" viewBox="0 0 380 220"></svg>
+            <svg id="gates-svg" viewBox="0 0 380 240"></svg>
           </div>
 
           <div class="info-box">
             <div style="font-weight:700; text-transform:uppercase; margin-bottom:2px;">COMPORTAMIENTO EN MODO 2:</div>
             <div>
-              • <strong>E3=1:</strong> CIERRA PINZA FIRME (90°).<br/>
-              • <strong>E2=1:</strong> PRE-AGARRE (30°) + BRAZO A 45°.<br/>
-              • <strong>E1=1:</strong> SUBE BRAZO A 90° (Y CON E2 CIERRA A 90° Y SUBE A 135°).<br/>
-              • <strong>E0=1:</strong> SUBE A 45° (Y CON E3 HACE AGARRE FIRME 90° + SUBIDA 135°).
+              • <strong>[E3 E2]:</strong> GIRO SOLICITADO G0..G3 (0°, 45°, 90°, 135°). PASA IGUAL A [S3 S2].<br/>
+              • <strong>[E1 E0]:</strong> ALTURA SOLICITADA Z0..Z3 (Z0 = GANCHO ABAJO, Z3 = ARRIBA).<br/>
+              • <strong>INTERLOCK:</strong> SI LA PLUMA NO ESTÁ EN G0 Y SE PIDE Z0, EL GANCHO SUBE A Z1 (LA CARGA NO PUEDE CHOCAR CON EL PEDESTAL AL GIRAR). EN G0 LA ALTURA PASA TAL CUAL.
             </div>
           </div>
 
@@ -388,28 +387,27 @@
       serialWriter: null
     };
 
-    const SERVO1_MAP = [0, 30, 60, 90];
-    const SERVO2_MAP = [0, 45, 90, 135];
+    // Servo 1 = GIRO de la pluma (G0..G3), Servo 2 = IZAJE del gancho (Z0..Z3)
+    const GIRO_MAP  = [0, 45, 90, 135];
+    const IZAJE_MAP = [0, 45, 90, 135];
 
     function angleToPwmUs(angle) {
       return Math.round(500 + (angle / 180) * 1900);
     }
 
+    // Red AND/OR/NOT con interlock: si la pluma no está en G0 (E3+E2 = 1)
+    // el gancho no puede estar en Z0, así que sube a Z1.
     function evaluateLogicGates(e3, e2, e1, e0) {
-      const notE1 = e1 === 0 ? 1 : 0;
-      const notE3 = e3 === 0 ? 1 : 0;
+      const outOfHome = (e3 | e2);          // OR
+      const notE1 = e1 === 0 ? 1 : 0;       // NOT
+      const and0 = (outOfHome & notE1);     // AND
 
-      const and3 = (e2 & e1);
-      const and2 = (e3 & notE1);
-      const and1 = (e3 & e0);
-      const and0 = (e2 & notE3);
+      const s3 = e3;
+      const s2 = e2;
+      const s1 = e1;
+      const s0 = (e0 | and0);               // OR
 
-      const s3 = (e3 | and3);
-      const s2 = (e2 | and2);
-      const s1 = (e1 | and1);
-      const s0 = (e0 | and0);
-
-      return { s3, s2, s1, s0, notE1, notE3, and3, and2, and1, and0 };
+      return { s3, s2, s1, s0, notE1, outOfHome, and0 };
     }
 
     function recalculateSystem() {
@@ -428,8 +426,8 @@
 
       const idxS1 = (state.outputs[3] << 1) | state.outputs[2];
       const idxS2 = (state.outputs[1] << 1) | state.outputs[0];
-      state.servo1Angle = SERVO1_MAP[idxS1];
-      state.servo2Angle = SERVO2_MAP[idxS2];
+      state.servo1Angle = GIRO_MAP[idxS1];
+      state.servo2Angle = IZAJE_MAP[idxS2];
 
       renderUI(gateInfo);
       sendToEsp32IfConnected();
@@ -499,13 +497,6 @@
 
       document.getElementById('out-decimal-label').textContent = `PATRÓN: ${outBin} (DEC ${outDec})`;
 
-      const wokwiCmd = `${state.mode === 'BINARY' ? 'M1' : 'M2'}:${inBin}`;
-      const wokwiBtn = document.getElementById('btn-wokwi-copy');
-      if (wokwiBtn) {
-        wokwiBtn.textContent = `COPIAR PARA WOKWI: ${wokwiCmd}`;
-        wokwiBtn.dataset.cmd = wokwiCmd;
-      }
-
       const gateOuts = [
         { id: 's3', val: gateInfo.s3 },
         { id: 's2', val: gateInfo.s2 },
@@ -526,35 +517,35 @@
         statusBadge.textContent = 'ACTIVO // 74HC04/08/32';
         document.getElementById('badge-input-mode').textContent = 'ENTRADAS COMPUERTAS';
         document.getElementById('mode-helper-text').textContent =
-          'MODO 2 (COMPUERTAS): LAS ENTRADAS [E3 E2 E1 E0] PASAN POR LAS COMPUERTAS AND, OR, NOT Y GENERAN EL PATRÓN [S3 S2 S1 S0].';
+          'MODO 2 (COMPUERTAS): [E3 E2] = GIRO SOLICITADO, [E1 E0] = ALTURA SOLICITADA. LAS COMPUERTAS AND/OR/NOT APLICAN EL INTERLOCK (PLUMA FUERA DE G0 => GANCHO MÍNIMO Z1).';
         document.getElementById('lbl-bit3').textContent = 'E3';
         document.getElementById('lbl-bit2').textContent = 'E2';
         document.getElementById('lbl-bit1').textContent = 'E1';
         document.getElementById('lbl-bit0').textContent = 'E0';
-        document.getElementById('role-bit3').textContent = 'AGARRE FIRME';
-        document.getElementById('role-bit2').textContent = 'PRE-AGARRE';
-        document.getElementById('role-bit1').textContent = 'SUBIR BRAZO';
-        document.getElementById('role-bit0').textContent = 'ELEVAR +45°';
+        document.getElementById('role-bit3').textContent = 'GIRO MSB';
+        document.getElementById('role-bit2').textContent = 'GIRO LSB';
+        document.getElementById('role-bit1').textContent = 'ALTURA MSB';
+        document.getElementById('role-bit0').textContent = 'ALTURA LSB';
       } else {
         banner.style.display = 'block';
         statusBadge.textContent = 'EN ESPERA (MODO 1)';
         document.getElementById('badge-input-mode').textContent = 'PALABRA BINARIA 4B';
         document.getElementById('mode-helper-text').textContent =
-          'MODO 1 (BINARIO): [B3 B2] CONTROLAN SERVO 1 (PINZA AGARRAR/SOLTAR) Y [B1 B0] CONTROLAN SERVO 2 (BRAZO SUBIR/BAJAR).';
+          'MODO 1 (BINARIO): [B3 B2] = GIRO DE LA PLUMA (SERVO 1) Y [B1 B0] = IZAJE DEL GANCHO (SERVO 2). SALIDA = ENTRADA.';
         document.getElementById('lbl-bit3').textContent = 'B3 (2³)';
         document.getElementById('lbl-bit2').textContent = 'B2 (2²)';
         document.getElementById('lbl-bit1').textContent = 'B1 (2¹)';
         document.getElementById('lbl-bit0').textContent = 'B0 (2⁰)';
-        document.getElementById('role-bit3').textContent = 'PINZA MSB';
-        document.getElementById('role-bit2').textContent = 'PINZA LSB';
-        document.getElementById('role-bit1').textContent = 'BRAZO MSB';
-        document.getElementById('role-bit0').textContent = 'BRAZO LSB';
+        document.getElementById('role-bit3').textContent = 'GIRO MSB';
+        document.getElementById('role-bit2').textContent = 'GIRO LSB';
+        document.getElementById('role-bit1').textContent = 'IZAJE MSB';
+        document.getElementById('role-bit0').textContent = 'IZAJE LSB';
       }
 
       document.getElementById('sim-action-badge').textContent = `SALIDA: ${outBin} (DEC ${outDec})`;
 
       renderGatesSVG(e3, e2, e1, e0, gateInfo);
-      renderClawCanvas(state.servo1Angle, state.servo2Angle, pwm1, pwm2);
+      renderCraneCanvas(state.servo1Angle, state.servo2Angle, pwm1, pwm2);
     }
 
     function renderGatesSVG(e3, e2, e1, e0, g) {
@@ -571,33 +562,38 @@
         </g>
       `;
 
-      const rows = [
-        { y: 14,  inLabel: 'E3=' + e3, inVal: e3, bit: 3, andLbl: 'AND(E2·E1)',   andVal: g.and3, orLbl: 'OR(E3+AND)', sLbl: 'S3=' + g.s3, sVal: g.s3 },
-        { y: 66,  inLabel: 'E2=' + e2, inVal: e2, bit: 2, andLbl: 'AND(E3·E1\')', andVal: g.and2, orLbl: 'OR(E2+AND)', sLbl: 'S2=' + g.s2, sVal: g.s2 },
-        { y: 118, inLabel: 'E1=' + e1, inVal: e1, bit: 1, andLbl: 'AND(E3·E0)',   andVal: g.and1, orLbl: 'OR(E1+AND)', sLbl: 'S1=' + g.s1, sVal: g.s1 },
-        { y: 170, inLabel: 'E0=' + e0, inVal: e0, bit: 0, andLbl: 'AND(E2·E3\')', andVal: g.and0, orLbl: 'OR(E0+AND)', sLbl: 'S0=' + g.s0, sVal: g.s0 }
-      ];
+      const line = (pts, bit) =>
+        `<polyline points="${pts}" fill="none" stroke="#000000" ${w(bit)} />`;
+      const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="2.5" fill="#000000" />`;
 
       let content = '';
-      rows.forEach(r => {
-        const midY = r.y + 13;
-        content += `
-          ${pin(8, r.y, r.inLabel, r.inVal, r.bit)}
-          <line x1="50" y1="${midY - 5}" x2="205" y2="${midY - 5}" stroke="#000000" ${w(r.inVal)} />
-          <line x1="50" y1="${midY + 5}" x2="82" y2="${midY + 5}" stroke="#000000" ${w(r.andVal)} />
-          ${box(82, r.y, 92, r.andLbl, r.andVal)}
-          <line x1="174" y1="${midY + 5}" x2="205" y2="${midY + 5}" stroke="#000000" ${w(r.andVal)} />
-          ${box(205, r.y, 88, r.orLbl, r.sVal)}
-          <line x1="293" y1="${midY}" x2="328" y2="${midY}" stroke="#000000" ${w(r.sVal)} />
-          ${pin(328, r.y, r.sLbl, r.sVal, null)}
-        `;
-      });
+
+      // S3 = E3, S2 = E2, S1 = E1 (cables directos)
+      content += pin(8, 8, 'E3=' + e3, e3, 3)  + line('50,21 330,21', e3) + pin(330, 8, 'S3=' + g.s3, g.s3, null);
+      content += pin(8, 44, 'E2=' + e2, e2, 2) + line('50,57 330,57', e2) + pin(330, 44, 'S2=' + g.s2, g.s2, null);
+      content += pin(8, 80, 'E1=' + e1, e1, 1) + line('50,93 330,93', e1) + pin(330, 80, 'S1=' + g.s1, g.s1, null);
+
+      // Derivaciones hacia la red de S0
+      content += line('62,21 62,147 88,147', e3) + dot(62, 21);
+      content += line('72,57 72,159 88,159', e2) + dot(72, 57);
+      content += line('80,93 80,189 88,189', e1) + dot(80, 93);
+
+      // S0 = E0 + (E3 + E2) · E1'
+      content += box(88, 140, 76, 'OR(E3+E2)=' + g.outOfHome, g.outOfHome);
+      content += box(88, 176, 76, "NOT(E1)=" + g.notE1, g.notE1);
+      content += line('164,153 171,153 171,165 178,165', g.outOfHome);
+      content += line('164,189 171,189 171,177 178,177', g.notE1);
+      content += box(178, 158, 80, "AND(F·E1')=" + g.and0, g.and0);
+      content += line('258,171 268,171', g.and0);
+      content += box(268, 158, 52, 'OR=' + g.s0, g.s0);
+      content += pin(8, 210, 'E0=' + e0, e0, 0) + line('50,223 294,223 294,184', e0);
+      content += line('320,171 330,171', g.s0) + pin(330, 158, 'S0=' + g.s0, g.s0, null);
 
       svg.innerHTML = content;
     }
 
-    function renderClawCanvas(s1Angle, s2Angle, pwm1, pwm2) {
-      const canvas = document.getElementById('clawCanvas');
+    function renderCraneCanvas(s1Angle, s2Angle, pwm1, pwm2) {
+      const canvas = document.getElementById('craneCanvas');
       const ctx = canvas.getContext('2d');
       const W = canvas.width;
       const H = canvas.height;
@@ -619,92 +615,164 @@
       ctx.lineTo(W - 15, 225);
       ctx.stroke();
 
-      const baseX = 115;
-      const baseY = 195;
+      const gIdx = GIRO_MAP.indexOf(s1Angle);
+      const zIdx = IZAJE_MAP.indexOf(s2Angle);
 
+      // Dibuja una barra con contorno negro y relleno blanco (estilo monocromático)
+      const bar = (x1, y1, x2, y2, outer, inner) => {
+        ctx.lineCap = 'butt';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = outer;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = inner;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      };
+
+      // ---------- VISTA LATERAL (el cable sube/baja según Z) ----------
+      const mastX = 75;
+      const jibY = 48;
+      const tipX = 240;
+      const groundY = 225;
+
+      // Pedestal (caja) + mástil
       ctx.fillStyle = '#000000';
-      ctx.fillRect(baseX - 28, baseY, 56, 30);
+      ctx.fillRect(mastX - 32, 203, 64, groundY - 203);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px monospace';
-      ctx.fillText('SERVO 2', baseX - 21, baseY + 18);
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('PEDESTAL', mastX - 28, 218);
+      bar(mastX, 203, mastX, 58, 10, 4);
 
+      // Pluma horizontal
+      bar(22, jibY, 250, jibY, 10, 4);
+
+      // Engranaje en lo alto del mástil (gira la pluma)
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(baseX, baseY, 8, 0, Math.PI * 2);
+      ctx.arc(mastX, jibY, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      for (let k = 0; k < 8; k++) {
+        const a = (k * Math.PI) / 4 + (s1Angle * Math.PI) / 180;
+        ctx.beginPath();
+        ctx.moveTo(mastX + Math.cos(a) * 11, jibY + Math.sin(a) * 11);
+        ctx.lineTo(mastX + Math.cos(a) * 15, jibY + Math.sin(a) * 15);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText('S1', mastX - 5, jibY + 3);
+
+      // Caja en el extremo contrario: servo del carrete (S2) y contrapeso
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(12, jibY + 6, 44, 26);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('S2', 28, jibY + 17);
+      ctx.font = 'bold 7px monospace';
+      ctx.fillText('CARRETE', 15, jibY + 27);
+
+      // Polea en el otro extremo de la pluma
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tipX, jibY + 11, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      const armRad = ((-10 - (s2Angle * 0.65)) * Math.PI) / 180;
-      const armLen = 125;
-      const wristX = baseX + Math.cos(armRad) * armLen;
-      const wristY = baseY + Math.sin(armRad) * armLen;
+      // Escala de niveles Z0..Z3 y posición del gancho
+      const hookY = 190 - zIdx * 33;
+      ctx.font = 'bold 8px monospace';
+      for (let i = 0; i < 4; i++) {
+        const ty = 190 - i * 33;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(264, ty, 8, 1);
+        ctx.fillText(`Z${i}`, 274, ty + 3);
+      }
+      ctx.fillRect(262, hookY - 1, 12, 3);
 
+      // Cable, gancho y carga
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 10;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(baseX, baseY);
-      ctx.lineTo(wristX, wristY);
+      ctx.moveTo(tipX, jibY + 17);
+      ctx.lineTo(tipX, hookY);
       ctx.stroke();
 
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(baseX, baseY);
-      ctx.lineTo(wristX, wristY);
+      ctx.arc(tipX, hookY + 6, 6, Math.PI * 1.1, Math.PI * 2.6);
       ctx.stroke();
 
       ctx.fillStyle = '#000000';
-      ctx.fillRect(wristX - 18, wristY - 12, 36, 24);
+      ctx.fillRect(tipX - 11, hookY + 13, 22, 22);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 9px monospace';
-      ctx.fillText('S1', wristX - 6, wristY + 3);
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText('OBJ', tipX - 9, hookY + 27);
 
-      const spread = ((90 - s1Angle) / 90) * 0.58 + 0.06;
-      const jawLen = 46;
-
-      const j1x = wristX + Math.cos(armRad - spread) * jawLen;
-      const j1y = wristY + Math.sin(armRad - spread) * jawLen;
-      const j2x = wristX + Math.cos(armRad + spread) * jawLen;
-      const j2y = wristY + Math.sin(armRad + spread) * jawLen;
-
-      const tip1x = j1x + Math.cos(armRad + 0.35) * 22;
-      const tip1y = j1y + Math.sin(armRad + 0.35) * 22;
-      const tip2x = j2x + Math.cos(armRad - 0.35) * 22;
-      const tip2y = j2y + Math.sin(armRad - 0.35) * 22;
-
+      // ---------- VISTA SUPERIOR (la pluma gira según G, 0°..135°) ----------
+      const cx = 362;
+      const cy = 150;
+      const R = 58;
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(wristX + 10, wristY - 4);
-      ctx.lineTo(j1x, j1y);
-      ctx.lineTo(tip1x, tip1y);
+      ctx.moveTo(292, 40);
+      ctx.lineTo(292, 236);
       ctx.stroke();
 
+      // Arco de recorrido y marcas G0..G3
+      ctx.setLineDash([3, 3]);
       ctx.beginPath();
-      ctx.moveTo(wristX + 10, wristY + 4);
-      ctx.lineTo(j2x, j2y);
-      ctx.lineTo(tip2x, tip2y);
+      ctx.arc(cx, cy, R, -(135 * Math.PI) / 180, 0);
       ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = 'bold 8px monospace';
+      ctx.fillStyle = '#000000';
+      GIRO_MAP.forEach((deg, i) => {
+        const a = (deg * Math.PI) / 180;
+        const mx = cx + Math.cos(a) * (R + 4);
+        const my = cy - Math.sin(a) * (R + 4);
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * (R - 4), cy - Math.sin(a) * (R - 4));
+        ctx.lineTo(mx, my);
+        ctx.stroke();
+        ctx.fillText(`G${i}`, cx + Math.cos(a) * (R + 8) - 6, cy - Math.sin(a) * (R + 8) + 3);
+      });
 
-      const isGripping = s1Angle >= 60;
-      const cubeX = isGripping ? (tip1x + tip2x) / 2 - 11 : 255;
-      const cubeY = isGripping ? (tip1y + tip2y) / 2 - 11 : 201;
+      const ang = (s1Angle * Math.PI) / 180;
+      const jibTipX = cx + Math.cos(ang) * R;
+      const jibTipY = cy - Math.sin(ang) * R;
+      const jibBackX = cx - Math.cos(ang) * 24;
+      const jibBackY = cy + Math.sin(ang) * 24;
+      bar(jibBackX, jibBackY, jibTipX, jibTipY, 8, 3);
 
-      ctx.fillStyle = isGripping ? '#000000' : '#ffffff';
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(jibBackX - 5, jibBackY - 5, 10, 10);
+      ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
-      ctx.fillRect(cubeX, cubeY, 22, 22);
-      ctx.strokeRect(cubeX, cubeY, 22, 22);
-      ctx.fillStyle = isGripping ? '#ffffff' : '#000000';
-      ctx.font = 'bold 8px monospace';
-      ctx.fillText('OBJ', cubeX + 3, cubeY + 14);
+      ctx.beginPath();
+      ctx.arc(jibTipX, jibTipY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
 
+      // ---------- Textos ----------
       ctx.fillStyle = '#000000';
       ctx.font = 'bold 11px monospace';
-      ctx.fillText(`SERVO 1 (PINZA): ${s1Angle}° [${s1Angle === 0 ? 'SOLTAR' : s1Angle >= 90 ? 'AGARRE FIRME' : 'AGARRE PARCIAL'}]`, 14, 18);
-      ctx.fillText(`SERVO 2 (BRAZO): ${s2Angle}° [${s2Angle === 0 ? 'ABAJO' : 'ARRIBA'}]`, 14, 34);
+      ctx.fillText(`SERVO 1 (GIRO): ${s1Angle}° [G${gIdx}]`, 14, 18);
+      ctx.fillText(`SERVO 2 (IZAJE): ${s2Angle}° [Z${zIdx}${zIdx === 0 ? ' ABAJO' : zIdx === 3 ? ' ARRIBA' : ''}]`, 14, 34);
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('VISTA LATERAL', 150, 236);
+      ctx.fillText('VISTA SUPERIOR', 300, 236);
 
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 1.5;
@@ -713,8 +781,8 @@
       ctx.lineTo(W, 240);
       ctx.stroke();
 
-      drawPwmWave(ctx, 14, 255, W - 28, 30, 'PWM SERVO 1 (PINZA)', pwm1);
-      drawPwmWave(ctx, 14, 298, W - 28, 30, 'PWM SERVO 2 (BRAZO)', pwm2);
+      drawPwmWave(ctx, 14, 255, W - 28, 30, 'PWM SERVO 1 (GIRO)', pwm1);
+      drawPwmWave(ctx, 14, 298, W - 28, 30, 'PWM SERVO 2 (IZAJE)', pwm2);
     }
 
     function drawPwmWave(ctx, x, y, width, height, label, pulseUs) {
